@@ -11,3 +11,4 @@ class UserSchema(BaseModel):
     Num_telefonico: str
     Ruta_imagen: Optional[str] = None
     estatus: bool
+

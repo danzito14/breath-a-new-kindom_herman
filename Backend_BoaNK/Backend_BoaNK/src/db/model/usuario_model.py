@@ -5,7 +5,7 @@ from toolz import unique
 from src.core.db_credentials import engine, meta_data
 
 usuarios = Table("usuarios", meta_data,
-                 Column("id_usuario", CHAR(10), primary_key=True),
+                 Column("id_usuario", CHAR(36), primary_key=True),
                  Column("id_nvl_usuario", Integer, nullable=False),
                  Column("Nickname",String(50), nullable=False, unique=True),
                  Column("Contraseña", String(200),nullable=False),
@@ -17,3 +17,4 @@ usuarios = Table("usuarios", meta_data,
                  Column("estatus", Boolean, nullable=False)
                  )
 meta_data.create_all(engine)
+

@@ -1,5 +1,17 @@
+from decimal import Decimal
 from pydantic import BaseModel
-from typing import Optional
 
 class PlatilloSchema(BaseModel):
-    id_nvl
+    id_tipo_platillo: int
+    Nombre_platillo: str
+    Ruta_imagen: str
+    precio_produccion: Decimal
+    precio_venta: Decimal
+    Receta: str
+    estatus: bool
+    Descripcion: str
+
+
+
+
+
