@@ -1,5 +1,6 @@
 from decimal import Decimal
 from pydantic import BaseModel
+from typing import  Optional
 
 class ComboSchema(BaseModel):
     Nombre_combo: str
@@ -9,7 +10,7 @@ class ComboSchema(BaseModel):
     estatus: bool
 
 class ComboDetalleSchema(BaseModel):
-    id_combo: str
+    id_combo: Optional[str] = None
     id_platillo: str
     Cantidad: int
 

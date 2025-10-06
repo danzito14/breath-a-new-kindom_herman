@@ -14,7 +14,7 @@ combo = Table("combo", meta_data,
 
 combo_detalle  = Table("combo_detalle", meta_data,
                         Column("id_detalle_combo", CHAR(36), primary_key=True),
-                    Column("id_combo",String(36), nullable=False),
+                    Column("id_combo",String(36), nullable=True),
                     Column("id_platillo",String(36), nullable=False),
                     Column("Cantidad",Integer, nullable=False)
                        )
