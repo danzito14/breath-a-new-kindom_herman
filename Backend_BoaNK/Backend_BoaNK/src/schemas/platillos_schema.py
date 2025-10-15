@@ -7,9 +7,9 @@ class PlatilloSchema(BaseModel):
     Ruta_imagen: str
     precio_produccion: Decimal
     precio_venta: Decimal
-    Receta: str
     estatus: bool
     Descripcion: str
+    tiempo_preparacion: int
 
 
 

@@ -1,0 +1,26 @@
+<section class="grid-container">
+    <div class="card" *ngFor="let producto of productos">
+        <div class="card-image">
+            <img [src]="producto.Ruta_imagen" [alt]="producto.Nombre_platillo" title="foto producto">
+            <span class="discount">50% Descuento</span>
+            <div class="icons">
+                <button class="icon-btn" title="Carrito"><i class="fas fa-shopping-cart"></i></button>
+                <button class="icon-btn" title="Favoritos"><i class="fas fa-heart"></i></button>
+            </div>
+        </div>
+
+        <div class="card-content">
+            <h2 class="card-title">{{ producto.Nombre_platillo }}</h2>
+            <p class="card-desc">{{ producto.Descripcion }}</p>
+        </div>
+
+        <div class="card_bottom">
+            <div class="price">
+                <span class="new-price">${{ producto.precio_venta }} MXN</span>
+                <span class="old-price">100</span>
+            </div>
+            <button class="order-btn">Encargar</button>
+        </div>
+    </div>
+
+</section>

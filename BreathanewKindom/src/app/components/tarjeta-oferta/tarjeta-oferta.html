@@ -1,0 +1,29 @@
+<section class="grid-container">
+    <div class="card" *ngFor="let oferta of ofertaproductos">
+        <input type="hidden" [name]="oferta.id_platillo">
+        <input type="hidden" [name]="oferta.id_oferta_platillo">
+        <input type="hidden" [name]="oferta.id_oferta">
+        <div class="card-image">
+            <img [src]="oferta.Ruta_imagen" [alt]="oferta.Nombre_platillo" title="foto oferta">
+            <span class="discount">{{oferta.porcentaje_descuento}}% Descuento</span>
+            <div class="icons">
+                <button class="icon-btn" title="Carrito"><i class="fas fa-shopping-cart"></i></button>
+                <button class="icon-btn" title="Favoritos"><i class="fas fa-heart"></i></button>
+            </div>
+        </div>
+
+        <div class="card-content">
+            <h2 class="card-title">{{ oferta.Nombre_platillo }}</h2>
+            <p class="card-desc">{{ oferta.Descripcion }}</p>
+        </div>
+
+        <div class="card_bottom">
+            <div class="price">
+                <span class="new-price">${{ oferta.precio_oferta }} MXN</span>
+                <span class="old-price">${{oferta.precio_venta}}</span>
+            </div>
+            <button class="order-btn">Encargar</button>
+        </div>
+    </div>
+
+</section>

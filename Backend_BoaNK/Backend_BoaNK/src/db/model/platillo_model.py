@@ -10,7 +10,7 @@ platillo = Table("platillo", meta_data,
                        Column ("Ruta_imagen", String(200), nullable=False),
                        Column ("precio_produccion", DECIMAL(10,2), nullable=False),
                        Column("precio_venta", DECIMAL(10, 2), nullable=False),
-                       Column("Receta", String(1000), nullable=False),
                        Column("estatus", Boolean, nullable=False),
-                       Column("Descripcion", String(100), nullable=False)
+                       Column("Descripcion", String(100), nullable=False),
+                       Column("tiempo_preparacion", Integer, nullable=False)
                  )

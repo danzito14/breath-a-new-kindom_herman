@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class UserSchema(BaseModel):
+    id_usuario: Optional[str]=None
     id_nvl_usuario: int
     Nickname: str
     Contraseña: str
