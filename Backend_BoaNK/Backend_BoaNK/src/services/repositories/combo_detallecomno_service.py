@@ -110,6 +110,46 @@ class ComboService:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
 
+    def get_id_platillo_combo(self, id_combo: str):
+        try:
+            stmt = text("""
+                SELECT id_platillo
+                FROM vista_combo_con_detalle
+                WHERE id_combo = :id_combo
+            """)
+
+            rows = self.db.execute(stmt, {"id_combo": id_combo}).fetchall()
+
+            if not rows:
+                raise HTTPException(status_code=404, detail="Combo no encontrado")
+
+            # Retornamos solo un array de diccionarios con id_platillo
+            return [dict(row._mapping) for row in rows]
+
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+
+    def get_combo_cabeza(self):
+        try:
+            stmt = self.db.execute(
+                select(combo)
+            ).all()
+            return [dict(row._mapping) for row in stmt]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    def get_combo_cabeza_by_price(self, min_price: int, max_price: int):
+        try:
+            stmt = self.db.execute(
+                select(combo).where(
+                    (combo.c.precio_combo >= min_price) & (combo.c.precio_combo <= max_price)
+                )
+            ).all()
+            return [dict(row._mapping) for row in stmt]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
 
 class ComboDetalleService:
     def __init__(self, db: Session = Depends(get_db)):

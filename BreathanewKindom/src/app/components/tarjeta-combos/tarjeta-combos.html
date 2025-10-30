@@ -1,0 +1,32 @@
+<section class="grid-container">
+    <div class="card" *ngFor="let producto of combos$ | async">
+        <input type="hidden" name="id_platillo" [id]="producto.id_combo">
+        <div class=" card-image">
+            <img [src]="producto.Ruta_imagen" [alt]="producto.Nombre_combo" title="foto producto">
+            <span class="discount">
+                Combo </span>
+
+            <div class="icons">
+                <button class="icon-btn" title="Carrito"
+                    (click)="personalizar_plato(producto.id_combo, 'combo', 'carrito')"><i
+                        class="fas fa-shopping-cart"></i></button>
+
+            </div>
+        </div>
+
+        <div class="card-content">
+            <h2 class="card-title">{{ producto.Nombre_combo }}</h2>
+            <p class="card-desc">{{ producto.Descripcion }}</p>
+        </div>
+
+        <div class="card_bottom">
+            <div class="price">
+                <span class="new-price">${{ producto.precio_combo }} MXN</span>
+
+            </div>
+            <button class="order-btn"
+                (click)="personalizar_plato(producto.id_combo, 'combo', 'pedido')">Encargar</button>
+        </div>
+    </div>
+
+</section>

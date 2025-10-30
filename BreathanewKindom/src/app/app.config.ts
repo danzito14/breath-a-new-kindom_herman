@@ -6,11 +6,14 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 
 import { provideHttpClient, withFetch } from '@angular/common/http';
 
+import { provideAnimations } from '@angular/platform-browser/animations';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes), provideClientHydration(withEventReplay()),
-    provideHttpClient(withFetch())
+    provideHttpClient(withFetch()),
+    provideAnimations()
   ]
 };

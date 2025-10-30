@@ -6,7 +6,7 @@ from sqlalchemy import insert,select, update, delete, text
 from typing import List
 
 from src.schemas.ofertas_schema import OfertasSchema, Oferta_PlatilloSchema
-from src.db.model.ofertas_model import ofertas, oferta_platillo
+from src.db.model.ofertas_model import ofertas, oferta_platillos
 from src.core.db_credentials import get_db
 
 class OfertasService:
@@ -83,8 +83,8 @@ class OfertasService:
     def desactivar_platillos_oferta(self, id_oferta: str):
         try:
             stmt = (
-                update(oferta_platillo)
-                .where(oferta_platillo.c.id_oferta == id_oferta)
+                update(oferta_platillos)
+                .where(oferta_platillos.c.id_oferta == id_oferta)
                 .values(activo=False)
             )
             self.db.execute(stmt)
@@ -118,9 +118,9 @@ class Oferta_PlatilloService:
         for id_platillo in id_platillos:
             # Verificar si ya existe la relación
             existe = self.db.execute(
-                select(oferta_platillo)
-                .where(oferta_platillo.c.id_platillo == id_platillo)
-                .where(oferta_platillo.c.id_oferta == id_oferta)
+                select(oferta_platillos)
+                .where(oferta_platillos.c.id_platillo == id_platillo)
+                .where(oferta_platillos.c.id_oferta == id_oferta)
             ).first()
 
             if existe:
@@ -137,7 +137,7 @@ class Oferta_PlatilloService:
             raise HTTPException(status_code=400, detail="Todos los platillos ya están asignados a esta oferta")
 
         # ✅ Inserción en masa
-        stmt = insert(oferta_platillo)
+        stmt = insert(oferta_platillos)
         try:
             self.db.execute(stmt, registros)
             self.db.commit()
@@ -152,7 +152,7 @@ class Oferta_PlatilloService:
     def get_all_ofertas_platillos(self):
         """Obtiene todas las relaciones entre ofertas y platillos"""
         try:
-            stmt = self.db.query(oferta_platillo).all()
+            stmt = self.db.query(oferta_platillos).all()
             return [dict(row._mapping) for row in stmt]
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -208,12 +208,12 @@ class Oferta_PlatilloService:
                 detalle_dict["id_oferta_platillo"] = str(uuid.uuid4())
                 detalles.append(detalle_dict)
 
-            stmt = insert(oferta_platillo).values(detalles)
+            stmt = insert(oferta_platillos).values(detalles)
 
             existe = self.db.execute(
-                select(oferta_platillo).where(
-                    oferta_platillo.c.id_oferta == id_oferta,
-                    oferta_platillo.c.id_platillo == detalle_dict["id_platillo"]
+                select(oferta_platillos).where(
+                    oferta_platillos.c.id_oferta == id_oferta,
+                    oferta_platillos.c.id_platillo == detalle_dict["id_platillo"]
                 )
             ).first()
 
@@ -231,7 +231,7 @@ class Oferta_PlatilloService:
 
     def delete_oferta_platillo(self, id_oferta_platillo: str):
         try:
-            stmt = delete(oferta_platillo).where(oferta_platillo.c.id_oferta_platillo == id_oferta_platillo)
+            stmt = delete(oferta_platillos).where(oferta_platillos.c.id_oferta_platillo == id_oferta_platillo)
             result = self.db.execute(stmt)
             self.db.commit()
 
@@ -248,7 +248,7 @@ class Oferta_PlatilloService:
 
     def delete_todos_platillos_oferta_platillo(self, id_oferta: str):
         try:
-            stmt = delete(oferta_platillo).where(oferta_platillo.c.id_oferta == id_oferta)
+            stmt = delete(oferta_platillos).where(oferta_platillos.c.id_oferta == id_oferta)
             result = self.db.execute(stmt)
             self.db.commit()
 

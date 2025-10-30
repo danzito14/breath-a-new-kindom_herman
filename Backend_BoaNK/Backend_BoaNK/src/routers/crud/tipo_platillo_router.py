@@ -5,7 +5,7 @@ from src.schemas.tipo_platillo_schema import Tipo_platilloSchema
 from src.services.repositories.tipo_platillo_service import Tipo_platillosService
 from src.core.db_credentials import get_db
 
-tipo_platillos = APIRouter()
+tipo_platillos = APIRouter(tags=["Tipo platillo"])
 
 @tipo_platillos.get("/")
 def root():

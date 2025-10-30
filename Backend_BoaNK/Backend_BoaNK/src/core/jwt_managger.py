@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 # correcto
-from jose import jwt
+from jose import jwt, JWTError
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 
 # Configuración
 SECRET_KEY = "b7f3e9c2-4a1d-4d6b-9f8e-2c3a7d9e5f1a"  # ⚠️ Cámbiala en producción
@@ -21,3 +22,16 @@ def create_access_token(id_usuario: str, nvl_usuario: str):
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return token
+
+security = HTTPBearer()
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Token inválido")
+        return user_id
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")

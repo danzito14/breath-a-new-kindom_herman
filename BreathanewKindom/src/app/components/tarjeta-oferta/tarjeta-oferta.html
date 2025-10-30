@@ -1,5 +1,5 @@
 <section class="grid-container">
-    <div class="card" *ngFor="let oferta of ofertaproductos">
+    <div class="card" *ngFor="let oferta of productos">
         <input type="hidden" [name]="oferta.id_platillo">
         <input type="hidden" [name]="oferta.id_oferta_platillo">
         <input type="hidden" [name]="oferta.id_oferta">
@@ -7,8 +7,16 @@
             <img [src]="oferta.Ruta_imagen" [alt]="oferta.Nombre_platillo" title="foto oferta">
             <span class="discount">{{oferta.porcentaje_descuento}}% Descuento</span>
             <div class="icons">
-                <button class="icon-btn" title="Carrito"><i class="fas fa-shopping-cart"></i></button>
-                <button class="icon-btn" title="Favoritos"><i class="fas fa-heart"></i></button>
+                <button class="icon-btn" title="Carrito"
+                    (click)="personalizar_plato(oferta.id_platillo, 'plato', 'carrito')"><i
+                        class="fas fa-shopping-cart"></i></button>
+                <button title="favorito" class="icon-btn" (click)="toggleFavorito(oferta)"
+                    [title]="oferta.isFavorite ? 'Eliminar favorito' : 'Agregar a favoritos'">
+                    <i *ngIf="oferta.isFavorite; else noFav" class="fas fa-heart text-red-500"></i>
+                    <ng-template #noFav>
+                        <i class="far fa-heart"></i>
+                    </ng-template>
+                </button>
             </div>
         </div>
 
@@ -22,7 +30,8 @@
                 <span class="new-price">${{ oferta.precio_oferta }} MXN</span>
                 <span class="old-price">${{oferta.precio_venta}}</span>
             </div>
-            <button class="order-btn">Encargar</button>
+            <button class="order-btn"
+                (click)="personalizar_plato(oferta.id_platillo, 'plato', 'pedido')">Encargar</button>
         </div>
     </div>
 

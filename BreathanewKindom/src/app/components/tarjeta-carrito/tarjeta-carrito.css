@@ -1,0 +1,152 @@
+/* ---------- CONTENEDOR GENERAL ---------- */
+main {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f3f3f3;
+    padding: 20px 0;
+}
+
+/* ---------- TARJETAS INDIVIDUALES ---------- */
+section {
+    overflow: hidden;
+    width: 90%;
+    height: 100px;
+    max-width: 900px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    border-radius: 12px;
+    border: 1px solid #d6b45a;
+    transition: 0.3s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    margin-bottom: 20px;
+}
+
+section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    background-color: #fff6e5;
+}
+
+/* ---------- CHECKBOX LATERAL ---------- */
+.checkbox-plato {
+    width: 5%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 2px solid #d6b45a;
+}
+
+/* ---------- CONTENIDO DEL PLATILLO ---------- */
+.info-container {
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+}
+
+.img-container {
+    width: 25%;
+    max-width: 180px;
+    overflow: hidden;
+}
+
+.img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.info-platillo-container {
+    flex: 1;
+    border-left: 2px solid #d6b45a;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#nombre_plato {
+    padding: 10px 15px;
+    background-color: #fff9ef;
+    border-bottom: 2px solid #d6b45a;
+}
+
+#nombre_plato h3 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+/* ---------- DETALLES DEL PLATILLO ---------- */
+.info-platillo {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    border-top: 2px solid #d6b45a;
+}
+
+#personalizacion-plato {
+    flex: 2;
+    padding: 10px;
+    border-right: 2px solid #d6b45a;
+}
+
+#personalizacion-plato h4 {
+    font-weight: 400;
+    color: #444;
+    margin: 0;
+}
+
+#subtotal {
+    flex: 1;
+    text-align: right;
+    padding: 10px 15px;
+}
+
+#subtotal h4 {
+    font-weight: 400;
+    margin: 0;
+    color: #555;
+}
+
+#subtotal h3 {
+    font-weight: 600;
+    color: #0CAF03;
+    margin-top: 5px;
+}
+
+/* ---------- BOTÓN DE ELIMINAR ---------- */
+#button-delete {
+    width: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: #d6b45a solid 3px;
+}
+
+#button-delete button {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#button-delete i {
+    color: #773832;
+    font-size: 1.5rem;
+    transition: color 0.3s ease;
+}
+
+#button-delete button:hover {
+    background-color: #773832;
+}
+
+#button-delete button:hover i {
+    color: #ffffff;
+}

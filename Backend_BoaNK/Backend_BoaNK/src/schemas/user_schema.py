@@ -9,7 +9,7 @@ class UserSchema(BaseModel):
     Nombre: str
     Apellido: str
     Correo_electronico: EmailStr
-    Num_telefonico: str
+    Num_telefonico: Optional[str] = None
     Ruta_imagen: Optional[str] = None
     estatus: bool
 

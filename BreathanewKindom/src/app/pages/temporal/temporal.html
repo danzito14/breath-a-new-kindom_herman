@@ -1,0 +1,92 @@
+<main>
+    <section>
+        <!-- <div class="seleccion-mesa">
+            <div class="titulo">
+                <h1>Mesas</h1>
+                <div class="disponible">
+                    <div class="cuadrito"></div>
+                    <h3> No disponible</h3>
+                </div>
+            </div>
+            <div class="mesas-container">
+                <button type="button" class="mesa-list">
+                    <h2>Mesa n</h2>
+                </button>
+                <button type="button" class="mesa-list">
+                    <h2>Mesa n</h2>
+                </button><button type="button" class="mesa-list">
+                    <h2>Mesa n</h2>
+                </button><button type="button" class="mesa-list">
+                    <h2>Mesa n</h2>
+                </button><button type="button" class="mesa-list">
+                    <h2>Mesa n</h2>
+                </button>
+            </div>
+        </div>
+        <div class="botones-principales">
+            <div class="cabeza-inicio">
+                <div class="rol-nombre">
+                    <h2>Rol empleado</h2>
+                    <h2>Nombre: Empleado</h2>
+                </div>
+                <h2>HH:MM</h2>
+            </div>
+
+            <div class="botones-platos">
+                <div class="botones-seleccion">
+                    <h1>Seleccione una mesa disponible
+                        para abrir una orden</h1>
+                    <button type="button" class="button-style" id="crear_pedido" title="Abrir pedido">Abrir
+                        Orden</button>
+
+                    <h1>Seleccione una mesa en rojo para agregar algún platillo a la orden o sacar la cuenta</h1>
+                    <button type="button" class="button-style" id="agregar_pedido" title="Agregar al pedido">
+                        Agregar a la orden
+                    </button>
+                </div>
+                <div class="platillos-listos">
+                    <div id="listo_para_servir" class="titulo">
+                        <h2>Listo para servir</h2>
+                    </div>
+                    <div class="platillos-no-servidos"></div>
+                </div>
+            </div>
+        </div> -->
+
+
+        <div class="resumenpedido">
+            <div class="tarjetas-carrito">
+                <app-tarjeta-carrito [cargar]="'carrito'" [boton_eliminar]="false" [checkbox]="false">
+                </app-tarjeta-carrito>
+            </div>
+            <div class="direccion-tipo-monto">
+                <div class="texto-pedido">
+                    <h2 id="resumen_pedido">Resumen del pedido</h2>
+                    <h2>Direccion:</h2>
+                    <h3>Casa, 81121, Andres Perez de Riva, 410, frente al poste f21, Adolfo Ruiz
+                        Cortines, Guasave, Sinaloa</h3>
+                    <h2>Tipo de pago: </h2>
+                    <h3>Tarjeta: Danzito de fontaine, ****1234</h3>
+                    <h2>Platillos</h2>
+                    <div class="resumen_pedido">
+                        <div>
+                            <div class="lista">
+                                <div id="Producto">Furina de fontaine</div>
+                                <div id="cantidad">x 1</div>
+                            </div>
+                            <div class="lista">
+                                <div id="Producto">El chocomilk que vendio el mundo</div>
+                                <div id="cantidad">x 2</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h2> Total:</h2>
+                    <h3> $500MXN </h3>
+                </div>
+                <div class="boton-pagar">
+                    <button type="button" class="button-style" title="pagar">Pagar: 500MXN</button>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>

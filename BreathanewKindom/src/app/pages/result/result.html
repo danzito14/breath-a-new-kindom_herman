@@ -1,0 +1,66 @@
+<main>
+    <section>
+        <div class="result" [ngSwitch]="filtro_especial">
+
+            <div *ngSwitchCase="'normal'">
+                <div class="titulo">
+                    <h1>{{ titulo }}</h1>
+                </div>
+                <app-tarjeta-product *ngIf="resultadoProducto" tipo="productos" [productosExternos]="resultadoProducto">
+                </app-tarjeta-product>
+            </div>
+
+            <div *ngSwitchCase="'oferta'">
+                <div class="titulo">
+                    <h1>{{ titulo }}</h1>
+                </div>
+
+                <app-tarjeta-oferta></app-tarjeta-oferta>
+            </div>
+
+            <div *ngSwitchCase="'combo'">
+                <div class="titulo">
+                    <h1>{{ titulo }}</h1>
+                </div>
+
+                <app-tarjeta-combo *ngIf="resultadoProductoCombo" [combosExternos]="resultadoProductoCombo"
+                    [autoCargar]="false"></app-tarjeta-combo>
+            </div>
+
+            <div *ngSwitchCase="'favoritos'">
+                <div class="titulo">
+                    <h1>{{ titulo }}</h1>
+                </div>
+
+                <div class="result">
+
+                    <app-tarjeta-product [favoritospage]="true" tipo="productos" *ngIf="resultadoProducto"
+                        [productosExternos]="resultadoProducto"></app-tarjeta-product>
+                </div>
+            </div>
+
+
+
+            <div *ngSwitchCase="'precio'">
+                <div class="titulo">
+                    <h1>Platillos</h1>
+                </div>
+                <div class="result">
+                    <app-tarjeta-product *ngIf="resultadoProducto" [productosExternos]="resultadoProducto">
+                    </app-tarjeta-product>
+
+                </div>
+                <div class="titulo">
+                    <h1>Combos</h1>
+                </div>
+                <div class="result">
+                    <app-tarjeta-combo *ngIf="resultadoProductoCombo" tipo="productos"
+                        [combosExternos]="resultadoProductoCombo" [autoCargar]="false"></app-tarjeta-combo>
+                </div>
+            </div>
+            <div *ngSwitchDefault="">
+                <p>No se encontraron resultados.</p>
+            </div>
+        </div>
+    </section>
+</main>

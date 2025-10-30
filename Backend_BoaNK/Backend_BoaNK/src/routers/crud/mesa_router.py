@@ -5,7 +5,7 @@ from src.schemas.mesa_schema import MesaSchema
 from src.services.repositories.mesa_service import  MesaService
 from src.core.db_credentials import get_db
 
-mesas = APIRouter()
+mesas = APIRouter(tags=["Mesa"])
 
 @mesas.get("/")
 def root():

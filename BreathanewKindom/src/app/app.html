@@ -1,6 +1,18 @@
-<app-header></app-header>
-<main>
-    <router-outlet></router-outlet>
+<!-- Fondo oscuro que aparece al abrir el sidebar -->
+<div class="overlay" *ngIf="sidebarVisible" (click)="toggleSidebar()"></div>
 
-</main>
-<app-footer></app-footer>
+<!-- Header solo si el layout está activo -->
+<ng-container *ngIf="mostrarLayout()">
+    <app-header (toggleSidebarEvent)="toggleSidebar()"></app-header>
+</ng-container>
+
+<!-- Sidebar -->
+<app-sidebar [isVisible]="sidebarVisible"></app-sidebar>
+
+<!-- Contenido principal -->
+<router-outlet></router-outlet>
+
+<!-- Footer solo si el layout está activo -->
+<ng-container *ngIf="mostrarLayout()">
+    <app-footer></app-footer>
+</ng-container>

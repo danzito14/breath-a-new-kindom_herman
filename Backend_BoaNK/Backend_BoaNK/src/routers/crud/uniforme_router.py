@@ -5,7 +5,7 @@ from src.schemas.uniforme_schema import UniformeSchema
 from src.services.repositories.uniforme_service import UniformeService
 from src.core.db_credentials import get_db
 
-uniformes = APIRouter()
+uniformes = APIRouter(tags=["Uniforme"])
 
 
 @uniformes.get("/")

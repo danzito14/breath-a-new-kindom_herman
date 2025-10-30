@@ -5,8 +5,14 @@
         </a>
         <div>
             <a href="/carrito" title="Carrito"><i class="fa-solid fa-cart-shopping"></i></a>
-            <a href="/usuario">Mi perfil</a>
-            <button title="sidebar"><i class="fa-solid fa-bars"></i></button>
+
+            <div *ngIf="nicknameCorto == 'Mi perfil'">
+                <a href="/login" title="Login">Iniciar Sesión</a>
+            </div>
+            <div *ngIf="nicknameCorto != 'Mi perfil'">
+                <a href="/usuario">{{ nicknameCorto }}</a>
+            </div>
+            <button title="sidebar" (click)="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
         </div>
     </nav>
 </header>

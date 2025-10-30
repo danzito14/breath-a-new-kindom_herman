@@ -1,0 +1,65 @@
+<main>
+    <div class="login-cont">
+        <div class="formulario-cont">
+            <div class="formulario-cabeza">
+                <div class="titulo_cabeza">
+                    <h2 id="titulo">Registro</h2>
+                </div>
+                <div class="inputs-cont">
+                    <div>
+                        <h3 id="nombre-h3">Ingresa tu nombre</h3>
+                        <input type="text" title="Nombre" id="nombre-input" [(ngModel)]="Nombre" name="Nombre">
+                    </div>
+                    <div>
+                        <h3 id="apellido-h3">Ingresa tu apellido</h3>
+                        <input type="text" id="apellido-input" title="Ingresa tu apellido" [(ngModel)]="Apellido"
+                            name="Apellido">
+                    </div>
+                    <div>
+                        <h3 id="usuario-h3">Usuario</h3>
+                        <input id="usuario-input" type="text" title="Usuario" [(ngModel)]="Nickname" name="usuario" />
+                    </div>
+                    <div>
+                        <h3 id="coreo-electronico-h3">Ingresa tu correo electronico</h3>
+                        <input type="email" name="correo electronico" title="correo electronico" id="correo-input"
+                            [(ngModel)]="Correo_electronico">
+                    </div>
+                    <div>
+                        <h3 id="contra-h3">Contraseña</h3>
+                        <input type="password" title="Contraseña" id="contra" [(ngModel)]="contrasena"
+                            name="contraseña" />
+                    </div>
+                    <div>
+                        <h3 id="contra2-h3">Confirmar contraseña</h3>
+                        <input type="password" title="Contraseña" id="contra2" [(ngModel)]="contrasena2"
+                            name="contraseña" />
+                    </div>
+                </div>
+            </div>
+            <div class="formulario-pie">
+                <div id="redireccionar-registro">
+                    <a routerLink="/login" id="no-cuenta">
+                        <span>¿Ya tienes una cuenta?</span>
+                        <span> Inicia sesión aqui</span>
+                    </a>
+                </div>
+                <div class="btn-cont">
+                    <button class="iniciar-sesion" (click)="onRegister()">Registrame</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="img_cont">
+        <div id="filtro"></div>
+        <div class="titulo">
+            <h2 id="restaurant">RESTAURANT</h2>
+            <h1 id="nombre-empresa">Breath <br>of a <br>New <br>Kingdom</h1>
+            <h3 id="eslogan">Saborea los paltillos dignos de un rey</h3>
+            <div class="info">
+                <h4>Encuéntranos en Andrés Pérez de Riva #410 también puedes pedir a domicilio llamando al 6871558515
+                </h4>
+            </div>
+        </div>
+    </div>
+
+</main>

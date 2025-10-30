@@ -1,0 +1,82 @@
+<main>
+    <section>
+        <!-- SECCIÓN DE DIRECCIÓN -->
+        <div class="direccion">
+            <h1>Seleccione una dirección</h1>
+            <div class="direccion-options">
+                <button class="agregar-direccion" (click)="agregar_tarjeta_o_direccion('direccion')">
+                    <div class="icon"><i class="fa-solid fa-plus"></i></div>
+                    <div class="info">
+                        <h4>Agregar dirección</h4>
+                        <i class="fa-solid fa-house"></i>
+                    </div>
+                </button>
+
+                <div class="direccion-usuario" *ngFor="let dicc of direcciones">
+                    <div class="direccionn">
+                        <div class="icon">
+                            <input type="radio" name="direccionSeleccionada" [value]="dicc.id_direccion"
+                                [(ngModel)]="direccionSeleccionada" title="Seleccionar dirección" />
+                        </div>
+                        <div class="info">
+                            <h4>{{ dicc.alias }}, {{ dicc.CP }}, {{ dicc.Calle }}, {{ dicc.No_ext }}</h4>
+                            <i class="fa-solid fa-house"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE PAGO -->
+        <div class="direccion">
+            <h1>Seleccione el tipo de pago</h1>
+            <div class="direccion-options">
+                <h2>Tarjeta</h2>
+                <button class="agregar-direccion" (click)="agregar_tarjeta_o_direccion('tarjeta')">
+                    <div class="icon"><i class="fa-solid fa-plus"></i></div>
+                    <div class="info">
+                        <h4>Agregar una tarjeta</h4>
+                        <i class="fa-solid fa-credit-card"></i>
+                    </div>
+                </button>
+
+                <div class="mis-tarjetas">
+                    <h4>Mis tarjetas</h4>
+                    <div class="direccion-usuario" *ngFor="let tarjet of tarjetas">
+                        <div class="direccionn">
+                            <div class="icon">
+                                <input type="radio" name="metodoPago" [value]="tarjet.id_tarjeta"
+                                    [(ngModel)]="metodoPagoSeleccionado" title="Seleccionar tarjeta" />
+                            </div>
+                            <div class="info">
+                                <h4>{{ tarjet.titular }} - **** {{ tarjet.num_tarjeta }} ({{ tarjet.fecha_exp }})</h4>
+                                <i class="fa-solid fa-credit-card"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="efectivo">
+                <h2>Efectivo</h2>
+                <div class="direccion-usuario">
+                    <div class="direccionn">
+                        <div class="icon">
+                            <input type="radio" name="metodoPago" value="Efectivo" [(ngModel)]="metodoPagoSeleccionado"
+                                title="Pagar con efectivo" />
+                        </div>
+                        <div class="info">
+                            <h4>Pagar con efectivo</h4>
+                            <i class="fa-solid fa-money-bills"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTÓN FINAL -->
+        <div class="boton">
+            <button class="buton-style" title="Ordenar ya" (click)="guardar_direccion_pago()">Ordenar ya</button>
+        </div>
+    </section>
+</main>

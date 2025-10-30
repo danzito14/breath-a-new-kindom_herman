@@ -8,12 +8,10 @@ tarjetas_pago = Table(
     Column("id_tarjeta", CHAR(36), primary_key=True),
     Column("id_usuario", CHAR(36), nullable=False),
     Column("titular", String(100), nullable=False),
-    Column("num_tarjeta", String(19), nullable=False),
-    Column("id_tipo_tarjeta", Integer, ForeignKey("tipos_tarjeta.id_tipo_tarjeta"), nullable=False),
-    Column("mes_exp", CHAR(2), nullable=False),
-    Column("anio_exp", CHAR(4), nullable=False),
-    Column("predeterminada", Boolean, nullable=False, default=False)
-)
+    Column("num_tarjeta", String(4), nullable=False),
+    Column("id_tipo_tarjeta", Integer, ForeignKey("tipos_tarjeta.id_tipo_tarjeta"), nullable=True),
+    Column("fecha_exp", CHAR(5), nullable=False),
+    )
 
 tipos_tarjeta = Table(
     "tipos_tarjeta",

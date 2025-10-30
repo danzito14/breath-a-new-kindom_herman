@@ -13,8 +13,8 @@ export class AuthService {
   constructor(private http: HttpClient) { }
 
   //creamos la funcion del login
-  login(usuario: string, contraseña: string): Observable<any> {
-    const body = { usuario, contraseña };
+  login(Nickname: string, contrasena: string): Observable<any> {
+    const body = { Nickname, contrasena };
     return this.http.post(`${this.apiUrl}`, body);
   }
 }

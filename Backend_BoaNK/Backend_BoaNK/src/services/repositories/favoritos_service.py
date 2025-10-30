@@ -16,7 +16,10 @@ class FavoritosService:
         favorito_dict["id_favorito"] = str(uuid.uuid4())  # ✅ generar antes del insert
 
         existe = self.db.execute(
-            select(favoritos).where(favoritos.c.id_platillo == favorito_dict["id_platillo"])
+            select(favoritos).where(
+                favoritos.c.id_platillo == favorito_dict["id_platillo"],
+                favoritos.c.id_usuario == favorito_dict["id_usuario"]
+            )
         ).first()
 
         if existe:
@@ -26,7 +29,8 @@ class FavoritosService:
         try:
             self.db.execute(stmt)
             self.db.commit()
-            return {"message": "Platillo agregado a favoritos"}
+            return {"message": "Platillo agregado a favoritos", "id_favorito": favorito_dict["id_favorito"],
+                    "id_usuario": favorito_dict["id_usuario"]}
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
@@ -34,8 +38,7 @@ class FavoritosService:
     def get_all_favoritos(self, id_usuario: str):
         try:
             stmt = text("""
-                SELECT id_favorito, id_usuario, id_platillo, Platillo, Ruta_imagen
-                FROM vista_favoritos_usuario
+                SELECT * FROM vista_favoritos_usuario
                    WHERE id_usuario = :id_usuario
             """)
             result = self.db.execute(stmt, {"id_usuario": id_usuario})

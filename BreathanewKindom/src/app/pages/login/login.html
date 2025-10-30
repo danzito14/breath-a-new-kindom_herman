@@ -3,26 +3,29 @@
         <div class="formulario-cont">
             <div class="formulario-cabeza">
                 <div class="titulo_cabeza">
-                    <h2 id="titulo">Inciar Sesión</h2>
+                    <h2 id="titulo">Iniciar Sesión</h2>
                 </div>
                 <div class="inputs-cont">
                     <div>
                         <h3 id="usuario-h3">Usuario</h3>
-                        <input id="usuario-input" type="text" title="Usuario">
+                        <input id="usuario-input" type="text" title="Usuario" [(ngModel)]="usuario" name="usuario" />
                     </div>
                     <div>
                         <h3 id="contra-h3">Contraseña</h3>
-                        <input type="password" title="Contraseña" id="contra">
+                        <input type="password" title="Contraseña" id="contra" [(ngModel)]="contrasena"
+                            name="contraseña" />
                     </div>
                 </div>
             </div>
             <div class="formulario-pie">
                 <div id="redireccionar-registro">
-                    <a href="registro" id="no-cuenta"><span>¿No tienes cuenta aún?</span><span> Registrate
-                            aquí</span></a>
+                    <a routerLink="/register" id="no-cuenta">
+                        <span>¿No tienes cuenta aún?</span>
+                        <span> Regístrate aquí</span>
+                    </a>
                 </div>
                 <div class="btn-cont">
-                    <button class="iniciar-sesion">Iniciar Sesion</button>
+                    <button class="iniciar-sesion" (click)="onLogin()">Iniciar Sesión</button>
                 </div>
             </div>
         </div>
@@ -39,6 +42,5 @@
             </div>
         </div>
     </div>
-
 
 </main>

@@ -1,0 +1,195 @@
+.sidebar-body {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100vh;
+    background-color: #fff;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    overflow-y: auto;
+    will-change: transform, opacity;
+}
+
+.options-menu-class {
+    background-color: #f5f5f5;
+    height: 92%;
+    overflow: hidden;
+}
+
+.buscar {
+    padding-left: 6%;
+    padding-top: 5%;
+    padding-bottom: 5%;
+    width: 100%;
+    border-bottom: solid 1px #D0AF43;
+}
+
+.buscar div {
+    display: flex;
+    flex-direction: row;
+}
+
+.buscar div img {
+    width: 1.5em;
+}
+
+.buscar button {
+    border: none;
+    background-color: #e4e4e4;
+    width: 2em;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-left: #D0AF43 solid 1px;
+}
+
+.buscar button:hover {
+    background-color: #d0af438f;
+}
+
+.buscar h4 {
+    font-weight: 100;
+    margin-bottom: 1%;
+}
+
+.buscar input {
+    width: 90%;
+    font-size: 1em;
+    padding: 5px;
+    border: none;
+    /* dorado */
+    outline: none;
+    box-shadow: none;
+    background: #e4e3e3;
+    color: #D0AF43;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.filtros-y-home-class {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-bottom: #D0AF43 solid 1px;
+    padding-bottom: 2%;
+    padding-top: 2%;
+    height: 225px;
+    overflow-y: auto;
+}
+
+.filtros-class {
+    display: flex;
+    flex-direction: column;
+
+
+}
+
+.filtros-class button {
+    width: 100%;
+    border: none;
+    background-color: transparent;
+    font-size: 1rem;
+}
+
+.filtros-class button:hover {
+    background-color: #D0AF4342;
+    border-left: #D0AF43 solid 5px;
+    transition: 100ms;
+}
+
+.button-style {
+    color: black;
+    text-decoration: none;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    text-align: center;
+    align-items: center;
+    padding-left: 5%;
+}
+
+.button-style img {
+    width: 32px;
+}
+
+.button-style h4 {
+    font-weight: 300;
+}
+
+.button-style:hover {
+    background-color: #D0AF4342;
+    border-left: #D0AF43 solid 5px;
+    transition: 100ms;
+}
+
+.filtro-price-class {
+    padding: 5%;
+    padding-left: 6%;
+    border-bottom: #D0AF43 solid 1px;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    /* Quita el estilo por defecto en Chrome/Safari */
+    width: 75%;
+    height: 8px;
+    background: #ddd;
+    border-radius: 4px;
+}
+
+/* Estilo del thumb (Chrome, Safari) */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #D0AF43;
+    /* Color del thumb */
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+#input-h4 {
+    margin-top: 5px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 2%;
+}
+
+.options-class {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-bottom: #D0AF43 solid 1px;
+}
+
+.output-class {
+    width: 100%;
+    height: 10%;
+    background-color: #f5f5f5;
+    border-top: #D0AF43 solid 1px;
+}
+
+.output-class button {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: transparent;
+    color: #773832;
+    font-size: 18px;
+    font-weight: 200;
+}
+
+.output-class button:hover {
+    background-color: #773832;
+    color: #ddd;
+}
+
+.output-class button:hover img {
+    filter: invert(1);
+    /* Invertir los colores del SVG */
+}

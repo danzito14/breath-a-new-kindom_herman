@@ -1,43 +1,38 @@
-from fastapi import Depends, HTTPException
-from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from fastapi import Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
+from passlib.context import CryptContext
 from sqlalchemy import insert, select
 import uuid
 
 from src.schemas.user_schema import UserSchema
 from src.db.model.usuario_model import usuarios
 from src.core.db_credentials import get_db
+from src.services.system.email.activar_cuenta_service import activar_cuentaService
+from src.services.system.email.email_service import EmailService
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class UsuarioService:
     def __init__(self, db: Session = Depends(get_db)):
         self.db = db
 
-    def create_user(self, *args, **kwargs):
+    def create_user(self, *args, background_tasks: BackgroundTasks = None, **kwargs):
         datos_requeridos = {
-            "id_usuario",
-            "id_nvl_usuario",
-            "Nickname",
-            "Contraseña",
-            "Nombre",
-            "Apellido",
-            "Correo_electronico",
-            "Num_telefonico",
-            "Ruta_imagen",
-            "estatus"
+            "id_usuario", "id_nvl_usuario", "Nickname", "Contraseña", "Nombre",
+            "Apellido", "Correo_electronico", "Num_telefonico", "Ruta_imagen", "estatus"
         }
 
-        # Si llegan desde el router (objeto UserSchema)
+        # Si llega un esquema (desde el router)
         if args and isinstance(args[0], UserSchema):
             data_user = args[0]
             user_dict = data_user.dict(exclude_unset=True)
 
-            # Generar id_usuario si no viene incluido
             if "id_usuario" not in user_dict:
                 user_dict["id_usuario"] = str(uuid.uuid4())
 
-        # Si llegan desde empleados con kwargs
+        # Si llega por kwargs (desde otra función)
         elif kwargs:
             missing = datos_requeridos - kwargs.keys()
             if missing:
@@ -46,14 +41,6 @@ class UsuarioService:
                     detail=f"Faltan los siguientes datos: {', '.join(missing)}"
                 )
 
-            extra = kwargs.keys() - datos_requeridos - {"id_usuario"}
-            if extra:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Datos desconocidos o no esperados: {', '.join(extra)}"
-                )
-
-            # ✅ Generar id_usuario si no se proporciona
             if "id_usuario" not in kwargs:
                 kwargs["id_usuario"] = str(uuid.uuid4())
 
@@ -63,33 +50,60 @@ class UsuarioService:
         else:
             raise HTTPException(status_code=400, detail="No se recibió ningún dato")
 
-        # Validar correo único
-        existing_correo = self.db.execute(
-            select(usuarios).where(usuarios.c.Correo_electronico == data_user.Correo_electronico)
-        ).first()
-        if existing_correo:
+        # Verificar si el correo o nickname ya existen
+        if self.db.execute(select(usuarios).where(usuarios.c.Correo_electronico == user_dict["Correo_electronico"])).first():
             raise HTTPException(status_code=400, detail="Correo electrónico ya registrado")
 
-        # Validar nickname único
-        existing_user = self.db.execute(
-            select(usuarios).where(usuarios.c.Nickname == data_user.Nickname)
-        ).first()
-        if existing_user:
+        if self.db.execute(select(usuarios).where(usuarios.c.Nickname == user_dict["Nickname"])).first():
             raise HTTPException(status_code=400, detail="Nickname ya existente")
 
-        # Hashear contraseña
-        user_dict["Contraseña"] = pwd_context.hash(data_user.Contraseña)
+        # Hashear la contraseña
+        user_dict["Contraseña"] = pwd_context.hash(user_dict["Contraseña"])
 
         stmt = insert(usuarios).values(**user_dict)
 
         try:
             self.db.execute(stmt)
             self.db.commit()
+
+            # Si es un usuario normal (nivel 1)
+            if user_dict.get("id_nvl_usuario") == 1:
+                codigo_activacion = str(uuid.uuid4())[:6].upper()
+
+                activar_service = activar_cuentaService(self.db)
+                activar_service.create_codigo(
+                    correo_electronico=user_dict["Correo_electronico"],
+                    codigo=codigo_activacion,
+                    create_at=datetime.utcnow(),
+                    expira_at=datetime.utcnow() + timedelta(minutes=10)
+                )
+
+                email_service = EmailService()
+
+                # ✅ Enviar correo en segundo plano
+                if background_tasks:
+                    background_tasks.add_task(
+                        email_service.enviar_correo,
+                        destinatario=user_dict["Correo_electronico"],
+                        asunto="Activa tu cuenta - Breath of a New Kingdom",
+                        nombre_usuario=user_dict["Nickname"],
+                        codigo=codigo_activacion
+                    )
+                else:
+                    # Si no hay BackgroundTasks (por ejemplo, en pruebas)
+                    email_service.enviar_correo(
+                        destinatario=user_dict["Correo_electronico"],
+                        asunto="Activa tu cuenta - Breath of a New Kingdom",
+                        nombre_usuario=user_dict["Nickname"],
+                        codigo=codigo_activacion
+                    )
+
             return {
-                "message": "Usuario creado correctamente",
+                "message": "Usuario creado correctamente. Verifica tu correo para activarlo.",
                 "nombre": user_dict["Nombre"],
                 "id_usuario": user_dict["id_usuario"]
             }
+
         except Exception as e:
             self.db.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=500, detail=f"Error al crear usuario: {e}")

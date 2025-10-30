@@ -5,7 +5,7 @@ from src.schemas.automovil_schema import AutomovilSchema
 from src.services.repositories.automovil_service import AutomovilService
 from src.core.db_credentials import get_db
 
-automoviles = APIRouter()
+automoviles = APIRouter(tags=["Automovil"])
 
 @automoviles.get("/")
 def root():

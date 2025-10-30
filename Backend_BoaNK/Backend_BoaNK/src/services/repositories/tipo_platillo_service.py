@@ -23,7 +23,7 @@ class Tipo_platillosService:
         try:
             self.db.execute(stmt)
             self.db.commit()
-            return {"message": "Tipo platillo agregado a favoritos"}
+            return {"message": "Tipo platillo agregado correctamente"}
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
@@ -76,7 +76,7 @@ class Tipo_platillosService:
             self.db.commit()
 
             if result.rowcount == 0:
-                raise HTTPException(status_code=400, detail="No se encontró el Tipo favorito a eliminar")
+                raise HTTPException(status_code=400, detail="No se encontró el Tipo platillo a eliminar")
 
             return {"message": "Tipo platillo eliminado correctamente"}  # ✅ respuesta útil
         except Exception as e:

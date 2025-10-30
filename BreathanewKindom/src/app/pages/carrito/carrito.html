@@ -1,1 +1,46 @@
-<p>carrito works!</p>
+<section>
+    <section class="conteiner">
+        <div>
+            <h1>Carrito</h1>
+        </div>
+
+        <div class="cuerpo">
+            <div class="tarjetas-productos">
+                <!-- Escuchar el evento del hijo -->
+                <app-tarjeta-carrito [cargar]="cargar" [boton_eliminar]="true" [checkbox]="true"
+                    (seleccionCambiada)="onSeleccionChange($event)">
+                </app-tarjeta-carrito>
+            </div>
+
+            <!-- Mostrar total solo si hay productos -->
+            <div class="total-carrito" *ngIf="productosSeleccionados.length > 0">
+                <div>
+                    <div class="titulo">
+                        <h2>Total</h2>
+                        <h3>$ {{ total}} MXN</h3>
+                    </div>
+
+                    <div class="resumen_pedido">
+                        <div *ngFor="let producto of resumenSeleccion" class="producto-item">
+                            <div class="lista">
+                                <div id="Producto">{{ producto.platillo.Nombre_platillo }}</div>
+                                <div id="cantidad">x {{ producto.cantidad}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="boton">
+                    <button class="buton-style" title="Encargar" (click)="encargarPedido()">
+                        Encargar Ya
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mostrar mensaje si no hay productos -->
+            <div *ngIf="productosSeleccionados.length === 0" class="total-carrito">
+                <p>No hay productos seleccionados.</p>
+            </div>
+        </div>
+    </section>
+</section>

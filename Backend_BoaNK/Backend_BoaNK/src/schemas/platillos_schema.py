@@ -11,6 +11,10 @@ class PlatilloSchema(BaseModel):
     Descripcion: str
     tiempo_preparacion: int
 
+class OpcionplatilloSchema(BaseModel):
+    id_platillo: str
+    opcion:str
+    precio: Decimal
 
 
 

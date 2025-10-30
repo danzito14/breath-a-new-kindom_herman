@@ -5,7 +5,7 @@ from src.schemas.puesto_schema import PuestoSchema
 from src.services.repositories.puesto_service import PuestoService
 from src.core.db_credentials import get_db
 
-puestos = APIRouter()
+puestos = APIRouter(tags=["Puesto"])
 
 @puestos.get("/")
 def root():

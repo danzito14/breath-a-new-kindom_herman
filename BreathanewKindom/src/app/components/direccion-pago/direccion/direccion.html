@@ -1,0 +1,109 @@
+<main>
+
+    <!-- 🔙 Botón para regresar -->
+    <button class="btn-regresar" type="button" (click)="regresar()">← Volver</button>
+
+    <section>
+        <h2>Agregar dirección</h2>
+
+        <!-- ✅ Agrega el formGroup aquí -->
+        <form [formGroup]="form">
+            <div class="alias">
+                <h4>Alias</h4>
+                <input type="text" formControlName="alias" class="input-style" title="Alias">
+                <div class="error" *ngIf="form.get('alias')?.touched && form.get('alias')?.hasError('required')"
+                    class="error">
+                    <h4>El alias es obligatorio.</h4>
+                </div>
+            </div>
+
+            <div class="datos-direccion">
+                <h4>Calle</h4>
+                <input type="text" formControlName="Calle" name="Calle" id="calle-input" title="Calle"
+                    class="input-style">
+                <div class="error" *ngIf="form.get('Calle')?.touched && form.get('Calle')?.hasError('required')"
+                    class="error">
+                    <h4> La calle es obligatoria.</h4>
+                </div>
+                <div class="No_direccion">
+                    <div>
+                        <h4>Número Exterior</h4>
+                        <input type="text" id="no_ext-input" formControlName="No_ext" class="input-style"
+                            title="Número exterior">
+                        <div class="error"
+                            *ngIf="form.get('No_ext')?.touched && form.get('No_ext')?.hasError('required')"
+                            class="error">
+                            <h4>El número exterior es obligatorio.</h4>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Número Interior</h4>
+                        <input type="text" id="no_int-input" formControlName="No_int" class="input-style"
+                            title="Número interior">
+                    </div>
+                    <div>
+                        <h4>Código Postal</h4>
+                        <input type="text" id="CP" class="input-style" formControlName="CP" title="Código postal"
+                            (blur)="obtener_direccion(form.get('CP')?.value)" soloNumeros>
+                        <div class="error" *ngIf="form.get('CP')?.touched && form.get('CP')?.hasError('required')"
+                            class="error">
+                            <h4> El codigo postal es obligatorio</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mas_datos">
+                    <div>
+                        <h4>Colonia</h4>
+                        <select id="colonia" class="input-style" formControlName="Colonia" title="Colonia">
+                            <option value="">Seleccione una colonia</option>
+                            <option *ngFor="let col of colonias" [value]="col">{{ col }}</option>
+                        </select>
+                        <div class="error"
+                            *ngIf="form.get('Colonia')?.touched && form.get('Colonia')?.hasError('required')"
+                            class="error">
+                            <h4>La colonia es obligatoria.</h4>
+                        </div>
+                    </div>
+
+                    <div class="colonia-datos">
+                        <div>
+                            <h4>Municipio</h4>
+                            <input type="text" formControlName="Municipio" class="input-style" title="Municipio">
+                            <div class="error"
+                                *ngIf="form.get('Municipio')?.touched && form.get('Municipio')?.hasError('required')"
+                                class="error">
+                                <h4>El municipio es obligatorio.</h4>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Estado</h4>
+                            <input type="text" formControlName="Estado" class="input-style" title="Estado">
+                            <div class="error"
+                                *ngIf="form.get('Estado')?.touched && form.get('Estado')?.hasError('required')"
+                                class="error">
+                                <h4> El estado es obligatorio.</h4>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Ciudad</h4>
+                            <input type="text" formControlName="Ciudad" class="input-style" title="Ciudad">
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4>Instrucciones Adicionales</h4>
+                        <textarea name="instruccion-add" id="instruccion-add" formControlName="instrucciones_add"
+                            title="Instrucciones Adicionales" maxlength="200" class="textarea-style"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button class="buton-style" type="button" title="Agregar Dirección" (click)="guardar_direccion()">
+                    Agregar Dirección
+                </button>
+            </div>
+        </form>
+    </section>
+</main>

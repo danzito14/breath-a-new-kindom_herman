@@ -1,0 +1,38 @@
+<main>
+    <section *ngFor="let platillo of platillosCarrito">
+        <div class="checkbox-plato" *ngIf="checkbox">
+            <input type="checkbox" name="plato" [value]="platillo.id_detalle_carrito"
+                (change)="toggleSeleccion(platillo, $event)" title="algo" />
+        </div>
+
+        <div class="info-container">
+            <div class="img-container">
+                <img [src]="platillo.Ruta_imagen" alt="{{ platillo.Nombre_platillo }}" />
+            </div>
+
+            <div class="info-platillo-container">
+                <div id="nombre_plato">
+                    <h3>{{ platillo.Nombre_platillo }}</h3>
+                </div>
+
+                <div class="info-platillo">
+                    <div id="personalizacion-plato">
+                        <h4>{{ platillo.detalles_adicionales }}</h4>
+                    </div>
+
+                    <div id="subtotal">
+                        <h4>Subtotal:</h4>
+                        <h3>{{ platillo.precio_unitario | currency:'MXN':'symbol':'1.2-2' }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div id="button-delete" *ngIf="boton_eliminar">
+                <button class="delete-plato" title="Eliminar platillo"
+                    (click)="eliminarPlatillo(platillo.id_detalle_carrito)">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+</main>

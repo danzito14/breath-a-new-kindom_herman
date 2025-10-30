@@ -15,6 +15,11 @@ export interface Oferta_home {
 }
 
 
+export interface ProductoConFavorito extends Oferta_home {
+  isFavorite: boolean;
+  id_favorito: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -27,3 +32,5 @@ export class OfertasService {
     return this.http.get<Oferta_home[]>(this.apiUrl);
   }
 }
+
+

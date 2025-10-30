@@ -14,6 +14,7 @@ direcciones_usuario = Table ("direcciones_usuario", meta_data,
                     Column("Ciudad", String(100), nullable=False),
                     Column("Municipio",	String(100), nullable=False),
                     Column("Estado",String(30), nullable=False),
-                    Column("predeterminada", Boolean, nullable=False)
+                    Column("predeterminada", Boolean, nullable=False),
+                    Column("instrucciones_add", String(200), nullable=True)
                     )
 

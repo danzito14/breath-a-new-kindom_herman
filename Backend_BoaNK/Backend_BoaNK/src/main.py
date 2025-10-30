@@ -13,12 +13,35 @@ from src.routers.crud.automovil_router import automoviles
 from src.routers.crud.uniforme_router import uniformes
 from src.routers.crud.direcciones_usuario_router import direcciones
 from src.routers.crud.tarjeta_tipotarjeta_router import tarjetas
+from src.routers.sys.activar_cuenta import cuenta
+from src.routers.sys.home_router import home
 from src.routers.sys.login_router import router
 from src.routers.crud.cocineros_router import _cocineros
 from src.routers.crud.oferta_router import ofertas
 from src.routers.crud.mesa_router import mesas
+from src.routers.crud.carrito_router import carrito
+
+from dotenv import load_dotenv
+import os
+
+from src.routers.sys.pedidos.pedidos_temporal_router import temporal
+from src.utils.cp_router import utils
+
+# ✅ Cargar el archivo .env
+load_dotenv()
+
 
 app = FastAPI()
+
+# Primero CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],  # ambos por seguridad
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.include_router(user)
 app.include_router(platillos)
@@ -35,11 +58,8 @@ app.include_router(router)
 app.include_router(_cocineros)
 app.include_router(ofertas)
 app.include_router(mesas)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:4200"],  # Angular
-    allow_credentials=True,
-    allow_methods=["*"],  # Permite todos los métodos (GET, POST, etc.)
-    allow_headers=["*"],  # Permite todos los headers
-)
+app.include_router(cuenta)
+app.include_router(home)
+app.include_router(carrito)
+app.include_router(temporal)
+app.include_router(utils)

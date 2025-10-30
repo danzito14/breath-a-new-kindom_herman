@@ -1,0 +1,59 @@
+<main>
+    <!-- 🔙 Botón para regresar -->
+    <button class="btn-regresar" type="button" (click)="regresar()">← Volver</button>
+
+    <section>
+        <form [formGroup]="form">
+            <h2>Agregar tarjeta</h2>
+
+            <div class="alias">
+                <h4>Titular</h4>
+                <input type="text" formControlName="titular" id="alias-input" class="input-style" title="Alias">
+                <div class="error" *ngIf="form.get('titular')?.touched && form.get('titular')?.hasError('required')">
+                    <h4>El titular es obligatorio.</h4>
+                </div>
+            </div>
+
+            <div class="datos-direccion">
+                <h4>Número de tarjeta</h4>
+                <input type="text" formControlName="numero_tarjeta" id="calle-input" class="input-style"
+                    title="Número de tarjeta" appTarjetaNumeros>
+                <div class="error"
+                    *ngIf="form.get('numero_tarjeta')?.touched && form.get('numero_tarjeta')?.hasError('required')">
+                    <h4>El número de tarjeta es obligatorio.</h4>
+                </div>
+            </div>
+
+            <div class="No_direccion">
+                <div>
+                    <h4>Fecha Exp</h4>
+                    <input type="text" formControlName="fecha" id="no_ext-input" class="input-style" title="Fecha Exp"
+                        appMesFecha>
+                    <div *ngIf="form.controls['fecha']?.errors?.['mesAnioInvalido']">
+                        Formato inválido. Usa MM/YY.
+                    </div>
+                    <div *ngIf="form.controls['fecha']?.errors?.['fechaAnterior']">
+                        La fecha no puede ser anterior al mes actual.
+                    </div>
+                    <div class="error" *ngIf="form.get('fecha')?.touched && form.get('fecha')?.hasError('required')">
+                        <h4>La fecha es obligatoria.</h4>
+                    </div>
+                </div>
+
+                <div>
+                    <h4>CVV</h4>
+                    <input type="text" formControlName="cvv" id="no_int-input" class="input-style" title="CVV"
+                        appTarjetaCvv>
+                    <div class="error" *ngIf="form.get('cvv')?.touched && form.get('cvv')?.hasError('required')">
+                        <h4>El CVV es obligatorio.</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button class="buton-style" id="agregar-direccion" type="button" title="Agregar tarjeta"
+                    (click)="guardar_tarjeta()">Agregar Tarjeta</button>
+            </div>
+        </form>
+    </section>
+</main>

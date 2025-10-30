@@ -7,7 +7,7 @@ from src.schemas.ofertas_schema import OfertasSchema, Oferta_PlatilloSchema
 from src.services.repositories.ofertas_service import OfertasService, Oferta_PlatilloService
 from src.core.db_credentials import get_db
 
-ofertas = APIRouter()
+ofertas = APIRouter(tags=["Oferta"])
 
 
 @ofertas.post("/ofertas/create_oferta", summary="Crear una nueva oferta")

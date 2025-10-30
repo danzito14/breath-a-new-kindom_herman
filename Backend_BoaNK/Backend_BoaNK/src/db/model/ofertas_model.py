@@ -13,7 +13,7 @@ ofertas = Table ("ofertas", meta_data,
                     Column("activo",	Boolean, nullable=False)
                  )
 
-oferta_platillo = Table ("oferta_platillos", meta_data,
+oferta_platillos = Table ("oferta_platillos", meta_data,
                      Column("id_oferta_platillo", CHAR(36), primary_key=True),
                     Column("id_platillo",CHAR(36), nullable=False),
                     Column("id_oferta",CHAR(36), nullable=False),

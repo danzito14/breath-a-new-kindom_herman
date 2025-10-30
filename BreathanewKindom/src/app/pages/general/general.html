@@ -1,0 +1,21 @@
+<main>
+    <section class="general" [ngSwitch]="accion">
+        <div *ngSwitchCase="'personalizar_plato'">
+            <app-personalizar-platillo *ngIf="idsPlatillos?.length" [idsProductos]="idsPlatillos" [carrito]="carrito">
+            </app-personalizar-platillo>
+        </div>
+
+        <div *ngSwitchCase="'agregar'">
+            <div *ngIf="agregar == 'tarjeta'">
+                <app-tarjeta></app-tarjeta>
+            </div>
+            <div *ngIf="agregar == 'direccion'">
+                <app-direccion></app-direccion>
+            </div>
+        </div>
+
+        <div *ngSwitchDefault="">
+            <p>Nada por mostrar</p>
+        </div>
+    </section>
+</main>

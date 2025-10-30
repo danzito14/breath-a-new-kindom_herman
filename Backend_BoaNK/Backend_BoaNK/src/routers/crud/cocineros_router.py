@@ -5,7 +5,7 @@ from src.schemas.cocineros_schemas import CocinaSchema
 from src.services.repositories.Cocineros_service import CocinerosService
 from src.core.db_credentials import get_db
 
-_cocineros = APIRouter()
+_cocineros = APIRouter(tags=["Cocineros"])
 
 @_cocineros.get("/")
 def root():

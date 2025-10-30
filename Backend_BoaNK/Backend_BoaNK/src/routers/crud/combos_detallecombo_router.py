@@ -9,7 +9,7 @@ from src.services.repositories.combo_detallecomno_service import ComboService
 from src.services.repositories.combo_detallecomno_service import ComboDetalleService
 from src.core.db_credentials import get_db
 
-combos = APIRouter()
+combos = APIRouter(tags=["Combo combo detalle"])
 
 @combos.get("/")
 def root():
@@ -35,6 +35,21 @@ def update_combo(id_combo: str, data: dict, db: Session = Depends(get_db)):
     service = ComboService(db)
     return service.update_combo(id_combo, data)
 
+@combos.get("/combos/get_combo_cabeza", summary="Obtener la informacion sola de los combos")
+def get_all_combo_cabeza(db: Session = Depends(get_db)):
+    service = ComboService(db)
+    return service.get_combo_cabeza()
+
+@combos.get("/combos/get_combo_by_price", summary="Obtener por precio")
+def get_combo_by_price(min_price: int, max_price: int, db: Session = Depends(get_db)):
+    service = ComboService(db)
+    return service.get_combo_cabeza_by_price(min_price, max_price)
+
+
+@combos.get("/combos/id_platos", summary="id de los platos del combo")
+def get_id_platos_combo(id_combo: str, db: Session = Depends(get_db)):
+    service = ComboService(db)
+    return  service.get_id_platillo_combo(id_combo)
 #Rutas combo detalle
 
 @combos.post("/combos/create_detalle_combo/{id_combo}", summary="Agregar platillos a un combo")

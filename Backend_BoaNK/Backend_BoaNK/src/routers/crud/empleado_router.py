@@ -7,7 +7,7 @@ from sqlalchemy import select, update, or_, func
 
 from src.services.repositories.Cocineros_service import CocinerosService
 from src.services.repositories.empelado_service import EmpleadoService
-empleados = APIRouter()
+empleados = APIRouter(tags=["Empleado"])
 
 @empleados.get("/empleado")
 def root():

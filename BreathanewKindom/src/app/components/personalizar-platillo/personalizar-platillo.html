@@ -1,0 +1,65 @@
+<main>
+
+    <section>
+        <div class="section" *ngFor="let producto of resultados$ | async">
+            <div class="platillo-tarjeta">
+                <div class="imagen">
+                    <img [src]="producto.Ruta_imagen" alt="">
+                    <div class="etiquetas">
+                        <span [ngStyle]="{'background-color': producto.color}">
+                            {{ producto.descripcion }}
+                        </span>
+                        <span *ngIf="producto.En_oferta" [ngStyle]="{'background-color': '#0CAF03'}">
+                            {{producto.Porcentaje_oferta}} % Descuento
+                        </span>
+                    </div>
+                </div>
+                <div class="titlulo">
+                    <h2>{{ producto.Nombre_platillo }}</h2>
+                </div>
+            </div>
+
+            <div class="personalizacion_opciones">
+                <h4>Opciones:</h4>
+
+                <!-- 🔹 Aquí va el segundo *ngFor -->
+                <div class="option-checkbox" *ngFor="let opcion of producto.opciones">
+                    <label>
+
+                        <input type="checkbox" name="opcion" [value]="opcion.id_option"
+                            (change)="actualizarPrecio(producto, opcion, $event)">
+
+                        {{ opcion.opcion }}
+                    </label>
+                    <span class="option-price">+ {{ opcion.precio }} mxn</span>
+                </div>
+            </div>
+
+            <div class="precio-platillo">
+                <div>
+                    <div class="platillo-base">
+                        <h2>Precio base del {{producto.Nombre_platillo}}</h2>
+                        <h3>{{producto.precio_venta}} mxn</h3>
+                    </div>
+                    <div class="precio-final">
+                        <h2>Precio final</h2>
+                        <h3>{{ producto.precio_final ?? producto.precio_venta }} mxn</h3>
+                    </div>
+                </div>
+                <div class="botones">
+                    <!-- Mostrar solo si carrito es true -->
+                    <div class="agregar-carrito" *ngIf="carrito">
+                        <button class="button-style"
+                            (click)="agregar_carrito(producto.id_platillo, producto.precio_final ?? producto.precio_venta, producto.detalle_adicional || '')">Agregar
+                            al carrito</button>
+                    </div>
+
+                    <!-- Mostrar solo si carrito es false -->
+                    <div class="encargar-ya" *ngIf="!carrito">
+                        <button class="button-style">Encargar ya</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>

@@ -2,7 +2,8 @@ main {
     padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 10px
+    gap: 10px;
+    background-color: #f5f5f5;
 }
 
 h1 {

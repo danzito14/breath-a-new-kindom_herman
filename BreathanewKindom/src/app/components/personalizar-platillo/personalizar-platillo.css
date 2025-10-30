@@ -1,0 +1,226 @@
+main {
+    width: 100vw;
+    height: 100%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+section {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    width: 80%;
+}
+
+.section {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: #fff;
+    box-shadow: 4px 4px 4px 0 rgba(0, 0, 0, 0.25);
+    border: #d6b45a solid 1px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+
+
+.platillo-options-container {
+    display: flex;
+    flex-direction: row;
+    width: 70%;
+}
+
+.platillo-tarjeta {
+    position: relative;
+    /* necesario para los spans absolutos */
+    min-width: 350px;
+    max-width: 33%;
+    border-right: 3px #d6b45a solid;
+}
+
+.imagen {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+    /* importante para posicionar badges */
+}
+
+.imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Estilo de los badges */
+.etiquetas {
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    gap: 3px;
+    top: 10px;
+    left: 10px;
+}
+
+.etiquetas span {
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+
+.platillo-tarjeta h2 {
+    padding-left: 10px;
+}
+
+.personalizacion_opciones {
+    padding-left: 10px;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 1.3rem;
+    width: 34%;
+    padding: 10px;
+}
+
+.list-options {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 10px;
+}
+
+.precio-platillo {
+    border-left: #d6b45a solid 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    justify-content: space-between;
+    width: 33%;
+}
+
+.precio-platillo h2,
+h3 {
+    font-weight: 200;
+}
+
+.precio-platillo h3 {
+    font-size: 1.9rem;
+}
+
+.button-style {
+    background: #d6b45a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 5px 5px;
+    font-weight: 400;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    /* centra horizontalmente */
+    align-items: center;
+    /* centra verticalmente */
+    text-align: center;
+    cursor: pointer;
+
+    transition: 0.3s;
+    width: 100%;
+    height: 30px;
+}
+
+.button-style:hover {
+    background: transparent;
+    border: #d6b45a solid 2px;
+    color: #d6b45a;
+}
+
+.option-checkbox {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-style: italic;
+}
+
+
+.option-checkbox span {
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    font-style: italic;
+}
+
+.option-price {
+    color: #0CAF03;
+}
+
+.precio-platillo h3 {
+    color: #0CAF03;
+}
+
+@media (max-width: 768px) {
+
+    .section {
+        gap: 25px;
+        flex-direction: column;
+        max-width: 100%;
+        min-width: 100%;
+    }
+
+    .platillo-options-container {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .platillo-tarjeta {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-right: none;
+        border-bottom: #d6b45a 3px solid;
+    }
+
+    .platillo-tarjeta img {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .personalizacion_opciones {
+        width: 100% !important;
+        /* fuerza a ocupar todo el ancho */
+        max-width: 100% !important;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+
+    .list-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        justify-content: space-between;
+    }
+
+    .option-checkbox {
+        flex-direction: column;
+    }
+
+    .precio-platillo {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-left: none;
+        border-top: #d6b45a 3px solid;
+    }
+}

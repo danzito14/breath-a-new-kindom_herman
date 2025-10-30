@@ -45,6 +45,7 @@ class Tarjetas_PagoService:
     def get_all_tarjetas_pago(self, id_usuario: str):
         try:
             stmt = select(tarjetas_pago).where(tarjetas_pago.c.id_usuario == id_usuario)
+
             result = self.db.execute(stmt)
             return [dict(row._mapping) for row in result]
         except Exception as e:

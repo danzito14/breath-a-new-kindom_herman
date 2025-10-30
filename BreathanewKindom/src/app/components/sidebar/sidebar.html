@@ -1,1 +1,77 @@
-<p>sidebar works!</p>
+<main class="sidebar-body" [@slideInOut]="isVisible ? 'visible' : 'hidden'">
+    <div class="options-menu-class">
+        <div class="buscar">
+            <h4>Buscar</h4>
+            <div>
+                <input type="search" name="search" #inputSearch id="input-search" class="input-search" title="search">
+                <button type="submit" title="Buscar"><img src="icons/icons-sidebar/buscar.svg"
+                        (click)="buscarTexto(inputSearch.value)" alt="buscar"></button>
+            </div>
+        </div>
+        <div class="filtros-y-home-class">
+            <div class="home-option">
+                <a href="" id="home-option" class="button-style" title="Inicio">
+                    <img src="icons/icons-sidebar/Home.svg" alt="">
+                    <h4>Inicio</h4>
+                </a>
+            </div>
+            <div class="filtros-class" *ngFor="let filtro of categoria">
+                <div>
+                    <button type="button" class="button-style"
+                        (click)="filtrarCategoria(filtro.id_tipo_platillo, filtro.descripcion)">
+                        <img [src]="filtro.ruta_icono" alt="">
+                        <h4>{{filtro.descripcion}}</h4>
+                    </button>
+
+                </div>
+            </div>
+        </div>
+        <div class="filtro-price-class">
+            <h4 id="rango-precio">
+                Rango Precio: {{ prices.min_price }} a {{ rangoActual }}
+            </h4>
+            <div id="input-h4">
+                <h4>{{ prices.min_price }}</h4>
+                <input type="range" name="rango-input" [min]="prices.min_price" [max]="prices.max_price"
+                    (input)="onSliderChange($any($event.target).value)" title="rango-input" id="rango-input">
+                <h4>{{ prices.max_price }}</h4>
+            </div>
+        </div>
+
+        <div class="options-class">
+
+            <a href="/usuario" id="user-option" title="User-page" class="button-style">
+                <img src="icons/icons-sidebar/User.svg" alt="User button">
+                <h4>Usuario</h4>
+            </a>
+            <a (click)="buscar_filtro('favoritos')" id=" Fav-option" title="Fav-page" class="button-style">
+                <img src="icons/icons-sidebar/Heart.svg" alt="Fav button">
+                <h4>Favoritos</h4>
+            </a>
+            <a (click)="buscar_filtro('combo')" id="Combos-option" title="Combos-page" class="button-style">
+                <img src="icons/icons-sidebar/Gift.svg" alt="Combos">
+                <h4>Combos</h4>
+            </a>
+            <a (click)="buscar_filtro('oferta')" id="Ofertas-option" class="button-style" title="Ofertas-page">
+                <img src="icons/icons-sidebar/Tag.svg" alt="Ofertas-page">
+                <h4>Ofertas</h4>
+            </a>
+            <a href="/recomendaciones" id="Recomendacion-option" class="button-style" title="Recomendacion-option">
+                <img src="icons/icons-sidebar/star_filled.svg" alt="">
+                <h4>Recomendaciones</h4>
+            </a>
+            <a href="/historial" id="History-option" class="button-style" title="Historal-page">
+                <img src="icons/icons-sidebar/clock-rotate-left-solid-full 1.svg" alt="">
+                <h4>Historial</h4>
+            </a>
+
+        </div>
+    </div>
+    <div class="output-class">
+        <button type="submit" id="output" class="button-style" title="Cerrar-Sesion">
+            <img src="icons/icons-sidebar/arrow-right-from-bracket-solid-full 2.svg" alt="">
+            <h3>Cerrar Sesión</h3>
+        </button>
+    </div>
+
+</main>

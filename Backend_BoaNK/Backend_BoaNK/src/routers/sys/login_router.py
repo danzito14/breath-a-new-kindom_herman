@@ -12,8 +12,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class LoginRequest(BaseModel):
     Nickname: str
-    contraseña: str
+    contrasena: str
 
+
+# request de fastapo reservado para login y que salga en la esquina superior para testeo
 @router.post("/BoaNK/login")
 def login(data: LoginRequest):
     db = SessionLocal()
@@ -26,7 +28,7 @@ def login(data: LoginRequest):
 
         user = result._mapping
 
-        if not pwd_context.verify(data.contraseña, user["Contraseña"]):
+        if not pwd_context.verify(data.contrasena, user["Contraseña"]):
             raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
         if user["estatus"] != 1:
