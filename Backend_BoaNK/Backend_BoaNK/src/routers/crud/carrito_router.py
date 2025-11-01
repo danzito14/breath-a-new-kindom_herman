@@ -1,6 +1,10 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.params import Body
+from sqlalchemy.orm import Session
 
+from src.core.db_credentials import get_db
 from src.core.jwt_managger import get_current_user
 from src.schemas.carrito_schema import CarritoSchema, DetalleCarrito
 from src.services.repositories.carrito_service import CarritoService
@@ -62,6 +66,12 @@ def get_carrito_by_user(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+
+@carrito.post("/get_by_ids", summary="Obtener por lista de IDs")
+def get_carrito_by_ids(data: List[str], db: Session = Depends(get_db)):
+    service = CarritoService(db)
+    return service.get_carrito_by_ids(data)
 
 # ❌ Eliminar un platillo específico del carrito
 @carrito.delete("/eliminar/{id_detalle_carrito}", summary="Eliminar platillo del carrito")

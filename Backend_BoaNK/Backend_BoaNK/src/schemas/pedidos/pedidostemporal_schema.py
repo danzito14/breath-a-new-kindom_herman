@@ -16,3 +16,4 @@ class pedido_temporalSchema(BaseModel):
     id_tarjeta: Optional[str] = None
     direccion: Optional[str] = None
     id_mesa: Optional[str] = None
+    id_direccion: Optional[str] = None

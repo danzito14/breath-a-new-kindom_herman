@@ -1,4 +1,6 @@
 import uuid
+from typing import List
+
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, update, delete, text
@@ -44,6 +46,31 @@ class CarritoService:
             return [dict(row._mapping) for row in query]
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
+
+    def get_carrito_by_ids(self, ids: List[str]):
+        try:
+            if not ids:
+                return []
+
+            # Crear una lista separada por comas de parámetros (:id0, :id1, ...)
+            placeholders = ", ".join([f":id{i}" for i in range(len(ids))])
+
+            # Usar IN con los placeholders
+            query_str = f"""
+                SELECT * 
+                FROM db_breath_of_a_new_kingdom.vista_carrito_detalle 
+                WHERE id_detalle_carrito IN ({placeholders})
+            """
+
+            # Crear diccionario de parámetros dinámicamente
+            params = {f"id{i}": val for i, val in enumerate(ids)}
+
+            query = self.db.execute(text(query_str), params)
+            return [dict(row._mapping) for row in query]
+
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
 
     # 🔹 Agrega platillo al carrito (crea carrito si no existe)
     def agregar_platillo_carrito(self,id_usuario:str, data_carrito: DetalleCarrito):

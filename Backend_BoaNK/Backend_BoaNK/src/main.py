@@ -25,6 +25,7 @@ from dotenv import load_dotenv
 import os
 
 from src.routers.sys.pedidos.pedidos_temporal_router import temporal
+from src.routers.sys.pedidos.registrar_pedido_router import registar
 from src.utils.cp_router import utils
 
 # ✅ Cargar el archivo .env
@@ -63,3 +64,4 @@ app.include_router(home)
 app.include_router(carrito)
 app.include_router(temporal)
 app.include_router(utils)
+app.include_router(registar)

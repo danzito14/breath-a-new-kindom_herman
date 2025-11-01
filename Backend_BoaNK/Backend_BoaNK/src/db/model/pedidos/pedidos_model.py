@@ -9,7 +9,8 @@ pedido = Table("pedido", meta_data,
                 Column("total", Integer, nullable=False),
                 Column("Fecha datetime", DATETIME, nullable=False),
                 Column("Estado", Enum('Pendiente','Preparando','Listo','En camino','Entregado','Pagada','Cancelado', name="Estado_num"), nullable=False),
-                Column("Tipo_pedido",Enum('Entrega','Local'), nullable=False)
+                Column("Tipo_pedido",Enum('Entrega','Local'), nullable=False),
+               Column("id_direccion", CHAR(36), nullable=False)
                )
 
 detalle_pedido = Table("detalle_pedido", meta_data,

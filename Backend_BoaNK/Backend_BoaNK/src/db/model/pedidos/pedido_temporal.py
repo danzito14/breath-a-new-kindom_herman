@@ -14,5 +14,6 @@ pedido_temporal = Table ("pedido_temporal", meta_data,
                 Column("metodo_pago",Enum('Efectivo','Tarjeta', name="metodo_pago"), nullable=True),
                 Column("id_tarjeta",CHAR(36), nullable=True),
                 Column("direccion",CHAR(200), nullable=True),
-                Column("id_mesa", CHAR(36), nullable=True)
-       )
+                Column("id_mesa", CHAR(36), nullable=True),
+                Column("id_direccion", CHAR(36), nullable=True),
+                         )

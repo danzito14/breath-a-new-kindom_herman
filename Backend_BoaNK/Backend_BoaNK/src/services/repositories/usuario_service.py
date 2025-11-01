@@ -80,22 +80,61 @@ class UsuarioService:
 
                 email_service = EmailService()
 
+                texto = f"""
+                            Hola {user_dict["Nickname"]},
+
+                            Tu registro en Breath of a New Kingdom fue exitoso.
+                            ¡Gracias por unirte a nosotros!
+
+                            Tu código de activación es: {codigo_activacion}
+                            Expira en 10 minutos.
+                            """
+
+                html = f"""
+                            <html>
+                            <head>
+                                <style>
+                                    .iniciar-sesion {{
+                                        background-color: #D0AF43;
+                                        border: none;
+                                        border-radius: 10px;
+                                        padding: 10px 20px;
+                                        color: white;
+                                        font-size: 18px;
+                                        text-decoration: none;
+                                        display: inline-block;
+                                    }}
+                                </style>
+                            </head>
+                            <body>
+                                <h2>Hola {user_dict["Nickname"]},</h2>
+                                <p>Gracias por registrarte en <b>Breath of a New Kingdom</b>.</p>
+                                <p>Tu código de activación es: <b>{codigo_activacion}</b></p>
+                                <p>El código expirará en 10 minutos.</p>
+
+                                <a class="iniciar-sesion" href="http://localhost:8000/cuenta/activar_cuenta?correo={user_dict["Correo_electronico"]}&codigo={codigo_activacion}">
+                                    Activar cuenta
+                                </a>
+                            </body>
+                            </html>
+                            """
+
                 # ✅ Enviar correo en segundo plano
                 if background_tasks:
                     background_tasks.add_task(
                         email_service.enviar_correo,
                         destinatario=user_dict["Correo_electronico"],
                         asunto="Activa tu cuenta - Breath of a New Kingdom",
-                        nombre_usuario=user_dict["Nickname"],
-                        codigo=codigo_activacion
+                        texto=texto,
+                        html = html
                     )
                 else:
                     # Si no hay BackgroundTasks (por ejemplo, en pruebas)
                     email_service.enviar_correo(
                         destinatario=user_dict["Correo_electronico"],
                         asunto="Activa tu cuenta - Breath of a New Kingdom",
-                        nombre_usuario=user_dict["Nickname"],
-                        codigo=codigo_activacion
+                        texto=texto,
+                        html=html
                     )
 
             return {
