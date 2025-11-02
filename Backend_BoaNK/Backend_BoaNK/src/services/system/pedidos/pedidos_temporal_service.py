@@ -28,16 +28,27 @@ class PedidoTemporalService:
 
         try:
             if result:
+                valores_update = {
+                    "datos_pedido": temporal_dict["datos_pedido"],
+                    "fecha_creacion": data_temporal.fecha_creacion,
+                    "precio": data_temporal.precio,
+                    "lista_producto": temporal_dict["lista_producto"],
+                }
+
+                # Solo agregamos los opcionales si existen
+                if temporal_dict.get("id_mesa") is not None:
+                    valores_update["id_mesa"] = temporal_dict["id_mesa"]
+
+                if temporal_dict.get("id_direccion") is not None:
+                    valores_update["id_direccion"] = temporal_dict["id_direccion"]
+
+                # Creamos la sentencia UPDATE
                 stmt = (
                     update(pedido_temporal)
                     .where(pedido_temporal.c.id_usuario == temporal_dict["id_usuario"])
-                    .values(
-                        datos_pedido=temporal_dict["datos_pedido"],
-                        fecha_creacion=data_temporal.fecha_creacion,
-                        precio=data_temporal.precio,
-                        lista_producto=temporal_dict["lista_producto"]
-                    )
+                    .values(**valores_update)
                 )
+
                 mensaje = "Pedido temporal actualizado correctamente"
             else:
                 temporal_dict["id_temporal"] = str(uuid.uuid4())

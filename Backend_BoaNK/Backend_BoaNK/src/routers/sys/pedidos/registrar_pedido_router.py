@@ -14,4 +14,4 @@ registar = APIRouter(prefix="/registrar_pedido", tags=["Registrar pedido"])
 def enviar_recibo(data_correo: CorreoResumen,current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     id_usurio = current_user
     service = RegistrarPedido_Service(db)
-    return service.enviar_correo_recibo(id_usurio, data_correo)
+    return service.pedido_main(id_usurio, data_correo)
