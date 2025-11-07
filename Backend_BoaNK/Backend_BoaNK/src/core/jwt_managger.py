@@ -35,3 +35,17 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         return user_id
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
+
+def get_user_level(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Devuelve el nivel de usuario (nvl_usuario) a partir del token JWT.
+    """
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        nvl_usuario: str = payload.get("nvl_usuario")
+        if nvl_usuario is None:
+            raise HTTPException(status_code=401, detail="Token inválido o sin nivel de usuario")
+        return nvl_usuario
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")

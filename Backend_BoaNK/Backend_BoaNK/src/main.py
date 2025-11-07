@@ -24,9 +24,13 @@ from src.routers.crud.carrito_router import carrito
 from dotenv import load_dotenv
 import os
 
+from src.routers.sys.pedidos.pago_router import pago_router
+from src.routers.sys.pedidos.pedido_gets_router import pedido_gets
 from src.routers.sys.pedidos.pedidos_temporal_router import temporal
 from src.routers.sys.pedidos.registrar_pedido_router import registar
+from src.services.system.pedidos.pedidos_estado import PedidoService_Gets
 from src.utils.cp_router import utils
+from src.utils.utils_empleados import untils_empleados
 
 # ✅ Cargar el archivo .env
 load_dotenv()
@@ -65,3 +69,7 @@ app.include_router(carrito)
 app.include_router(temporal)
 app.include_router(utils)
 app.include_router(registar)
+app.include_router(untils_empleados)
+app.include_router(pedido_gets)
+app.include_router(pago_router)
+

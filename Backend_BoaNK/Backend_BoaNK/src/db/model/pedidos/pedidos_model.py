@@ -10,7 +10,10 @@ pedido = Table("pedido", meta_data,
                 Column("Fecha", DATETIME, nullable=False),
                 Column("Estado", Enum('Pendiente','Preparando','Listo','En camino','Entregado','Pagada','Cancelado', name="Estado_num"), nullable=False),
                 Column("Tipo_pedido",Enum('Entrega','Local'), nullable=False),
-               Column("id_direccion", CHAR(36), nullable=False)
+               Column("id_direccion", CHAR(36), nullable=False),
+                Column("monto_pagado", DECIMAL(10,2), nullable=True),
+                Column("forma_pago", CHAR(30), nullable=True),
+                Column("fecha_pago", DATETIME, nullable=True)
                )
 
 detalle_pedido = Table("detalle_pedido", meta_data,
@@ -19,6 +22,6 @@ detalle_pedido = Table("detalle_pedido", meta_data,
                 Column("id_platillo",CHAR(36), nullable=False),
                 Column("Precio_unitario",DECIMAL(10,2), nullable=False),
                 Column("tiempo_total",Integer, nullable=False),
-                Column("estado", Enum('pendiente','cocinando','listo', name="estado_enum"), nullable=False),
+                Column("estado", Enum('pendiente','cocinando','listo','servido','cancelado', name="estado_enum"), nullable=False),
                 Column("detalles_adicionales",String(100), nullable=False)
                        )

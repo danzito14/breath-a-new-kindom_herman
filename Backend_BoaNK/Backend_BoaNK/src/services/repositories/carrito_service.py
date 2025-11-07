@@ -108,3 +108,18 @@ class CarritoService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
+
+    def vaciar_carrito_usuario(self, id_usuario:str):
+        try:
+            id_carrito = self.db.execute(select(carrito.c.id_carrito).where(carrito.c.id_usuario == id_usuario)).scalar()
+            stmt = delete(detalle_carrito).where(detalle_carrito.c.id_carrito == id_carrito)
+            result = self.db.execute(stmt)
+            self.db.commit()
+
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="No se encontró el platillo a eliminar")
+
+            return {"message": "Platillo eliminado correctamente"}
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))

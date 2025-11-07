@@ -1,10 +1,10 @@
 import uuid
-from datetime import date
-from typing import List
+from datetime import date, datetime
+from typing import List, Optional
 
 from fastapi import Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update, literal
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import Session
 
@@ -16,6 +16,7 @@ from src.db.model.usuario_model import usuarios
 from src.core.db_credentials import get_db
 from src.schemas.pedidos.pedido_schema import Pedido_Schema, Detalle_Pedido_Schema
 from src.schemas.pedidos.pedidostemporal_schema import pedido_temporalSchema
+from src.services.repositories.mesa_service import MesaService
 from src.services.system.email.email_service import EmailService
 
 
@@ -26,10 +27,11 @@ class Producto(BaseModel):
 
 class CorreoResumen(BaseModel):
     id_temporal: str
-    direccion: str
-    metodo_pago: str
+    direccion: Optional[str] = None
+    metodo_pago: Optional[str] = None
     precio: float
     productos: List[Producto]
+    id_pedido: Optional[str] = None
 
 class RegistrarPedido_Service:
     def __init__(self, db: Session = Depends(get_db)):
@@ -45,7 +47,7 @@ class RegistrarPedido_Service:
             > registrar esos productos en detalle pedido > eliminar los productos del carrito > vaciar/elimnar la tupla del pedido_temporal > enviar correo
         
     """
-    def pedido_main(self, id_usuario:str, data: CorreoResumen):
+    def pedido_main(self, id_usuario:str, nvl_usuario:str, data: CorreoResumen):
        # sacamos el id temporal
         id_temporal = data.id_temporal
         # obtenemos todos los datos de la tupla
@@ -60,11 +62,12 @@ class RegistrarPedido_Service:
         row_dict = dict(result._mapping)
         datos_temporal = pedido_temporalSchema(**row_dict)
 
-    #asi es no se me ocurrio mejor nombre para el diccionario que retorna
-        variable = self.create_pedido(id_usuario, datos_temporal)
-
-       #sacamos el id_pedido para registrar despues los productos en pedido detalle
-        id_pedido_cabeza = variable.get("id_pedido")
+        if not data.id_pedido:
+            variable = self.create_pedido(id_usuario, datos_temporal)
+            id_pedido_cabeza = variable.get("id_pedido")
+        else:
+            id_pedido_cabeza = data.id_pedido
+            self.actualizar_pedido(id_pedido_cabeza, data.precio)
 
        #sacamos el id o ids de datos_pedido que contiene ["id1","id2",...]
         array_ids_carrito = datos_temporal.datos_pedido
@@ -72,9 +75,10 @@ class RegistrarPedido_Service:
 
         #una vez registrado todo borramos del carrito los productos comprados
         self.delete_carritos(id_temporal, array_ids_carrito)
-
+        print(nvl_usuario)
         # y enviamos el correo
-        self.enviar_correo_recibo(id_usuario,id_pedido_cabeza, data)
+        if nvl_usuario == "1":
+            self.enviar_correo_recibo(id_usuario,id_pedido_cabeza, data)
 
     def create_pedido(self, id_usuario:str, data_temporal: pedido_temporalSchema):
         try:
@@ -88,7 +92,7 @@ class RegistrarPedido_Service:
                 id_usuario=id_usuario,
                 id_mesa=temporal_dict.get("id_mesa"),
                 id_direccion=temporal_dict.get("id_direccion"),
-                Fecha=date.today(),
+                Fecha=datetime.today(),
                 Estado='Pendiente',  # Enum "pendiente"
                 Tipo_pedido=(
                     'Local' if temporal_dict.get("id_mesa")
@@ -97,6 +101,11 @@ class RegistrarPedido_Service:
                 ),
                 total=temporal_dict.get("precio", 0)
             )
+
+
+            # si existe el id_mesa la vamos a ocupoar
+            id_mesa = temporal_dict.get("id_mesa")
+            self.ocupar_mesa(id_mesa)
 
             #una vez creado vamos a insertarlo
             try:
@@ -116,6 +125,20 @@ class RegistrarPedido_Service:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=f"Error al registrar el pedido: {e}")
 
+    def actualizar_pedido(self, id_pedido: str, precio: float):
+        try:
+            stmt = (
+                update(pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+                .values(total=pedido.c.total + literal(precio))
+            )
+            self.db.execute(stmt)
+            self.db.commit()
+            print(f"Pedido {id_pedido} actualizado correctamente (+{precio}).")
+
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=f"Error al actualizar el pedido: {e}")
 
     """
         Aqui vamos a enviarle ya sea 1 id o varios ids carrito para que saque los datos y los registre automaticamente en la 
@@ -182,6 +205,15 @@ class RegistrarPedido_Service:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
+
+
+
+    def ocupar_mesa(self, id_mesa:str):
+        service_mesas = MesaService(self.db)
+        data= {
+         "Estado": "Ocupada"
+        }
+        service_mesas.update_mesa(id_mesa,data)
 
     """
     ################################################################################################################

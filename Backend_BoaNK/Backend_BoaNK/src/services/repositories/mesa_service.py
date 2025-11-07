@@ -2,9 +2,10 @@ import uuid
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import insert,select, update, delete, func
+from sqlalchemy import insert, select, update, delete, func, not_, true
 
 from src.db.model.mesa_model import mesa
+from src.db.model.pedidos.pedidos_model import pedido
 from src.schemas.mesa_schema import MesaSchema
 from src.core.db_credentials import get_db
 
@@ -31,7 +32,23 @@ class MesaService:
 
     def get_all_mesas(self):
         try:
-            stmt = self.db.query(mesa).all()
+            stmt = (
+                self.db.query(
+                    mesa.c.id_mesa,
+                    mesa.c.Nombre_mesa,
+                    mesa.c.Capacidad,
+                    pedido.c.id_pedido.label("id_pedido"),
+                    mesa.c.Estado.label("Estado"),
+                    mesa.c.estatus_bool
+                )
+                .outerjoin(
+                    pedido,
+                    (pedido.c.id_mesa == mesa.c.id_mesa)
+                    & (not_(pedido.c.Estado.in_(["Pagada", "Cancelado"])))
+                    & (mesa.c.estatus_bool == 1)
+                )
+                .order_by(mesa.c.Nombre_mesa)
+                .all())
             return [dict(row._mapping) for row in stmt]
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))

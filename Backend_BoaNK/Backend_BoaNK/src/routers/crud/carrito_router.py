@@ -89,12 +89,13 @@ def eliminar_platillo(id_detalle_carrito: str, service: CarritoService = Depends
 
 
 # 🧹 Vaciar todo el carrito de un usuario
-@carrito.delete("/vaciar/{id_usuario}", summary="Vaciar carrito completo")
-def vaciar_carrito(id_usuario: str, service: CarritoService = Depends()):
+@carrito.delete("/vaciar", summary="Vaciar carrito completo")
+def vaciar_carrito(current_user: str = Depends(get_current_user), service: CarritoService = Depends()):
     """
     Elimina todos los platillos del carrito del usuario especificado.
     """
     try:
+        id_usuario = current_user
         result = service.vaciar_carrito_usuario(id_usuario)
         return result
     except HTTPException as e:
