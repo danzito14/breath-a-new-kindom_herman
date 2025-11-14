@@ -50,7 +50,7 @@ class EmpleadoService:
             self.db.execute(stmt)
 
             # Crear cocinero si aplica
-            if nvl_usuario == 2:
+            if nvl_usuario == 3:
                 nombre_completo = f"{empleado_dict.get('Nombre', '')} {empleado_dict.get('Apellido', '')}".strip()
                 service_cocinero.create_cocinero(
                     id_usuario=empleado_dict["id_usuario"],
