@@ -16,5 +16,4 @@ pedido_temporal = Table ("pedido_temporal", meta_data,
                 Column("direccion",CHAR(200), nullable=True),
                 Column("id_mesa", CHAR(36), nullable=True),
                 Column("id_direccion", CHAR(36), nullable=True),
-                Column("titular", String(36), nullable=True)
                          )

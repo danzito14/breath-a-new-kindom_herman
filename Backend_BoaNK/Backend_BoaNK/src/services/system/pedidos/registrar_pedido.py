@@ -14,12 +14,9 @@ from src.db.model.pedidos.pedidos_model import pedido, detalle_pedido
 from src.db.model.platillo_model import platillo
 from src.db.model.usuario_model import usuarios
 from src.core.db_credentials import get_db
-from src.schemas.direcciones_usuario_schema import Direcciones_usuarioSchema
 from src.schemas.pedidos.pedido_schema import Pedido_Schema, Detalle_Pedido_Schema
 from src.schemas.pedidos.pedidostemporal_schema import pedido_temporalSchema
-from src.services.repositories.direcciones_usuario_service import Direcciones_usuarioService
 from src.services.repositories.mesa_service import MesaService
-from src.services.repositories.usuario_service import UsuarioService
 from src.services.system.email.email_service import EmailService
 
 
@@ -65,29 +62,12 @@ class RegistrarPedido_Service:
         row_dict = dict(result._mapping)
         datos_temporal = pedido_temporalSchema(**row_dict)
 
-        if nvl_usuario =='4':
-            """
-                Si es nvl 4 eso quiere decir que es el cajero que esta haciendo un pedido aun cliente común por lo que se le tiene que hacer una
-                cuenta temporal y una direccion temporal que al cancelar o entregar el pedido se tiene que eliminar
-            """
-            result_m = self.create_user_temporal(row_dict)
-            var_id_usuario = result_m.get('id_usuario')
-
-            id_direccion = self.create_direccion_temporal(var_id_usuario, row_dict)
-
-            datos_temporal.id_direccion = id_direccion["id_direccion"]
-            datos_temporal.id_usuario = var_id_usuario
-
-            variable = self.create_pedido(var_id_usuario, datos_temporal)
+        if not data.id_pedido:
+            variable = self.create_pedido(id_usuario, datos_temporal)
             id_pedido_cabeza = variable.get("id_pedido")
-
         else:
-            if not data.id_pedido:
-                variable = self.create_pedido(id_usuario, datos_temporal)
-                id_pedido_cabeza = variable.get("id_pedido")
-            else:
-                id_pedido_cabeza = data.id_pedido
-                self.actualizar_pedido(id_pedido_cabeza, data.precio)
+            id_pedido_cabeza = data.id_pedido
+            self.actualizar_pedido(id_pedido_cabeza, data.precio)
 
        #sacamos el id o ids de datos_pedido que contiene ["id1","id2",...]
         array_ids_carrito = datos_temporal.datos_pedido
@@ -122,11 +102,10 @@ class RegistrarPedido_Service:
                 total=temporal_dict.get("precio", 0)
             )
 
-            id_mesa = temporal_dict.get("id_mesa")
 
-            # Solo ocupar la mesa si se trata de un pedido en mesa
-            if id_mesa:
-                self.ocupar_mesa(id_mesa)
+            # si existe el id_mesa la vamos a ocupoar
+            id_mesa = temporal_dict.get("id_mesa")
+            self.ocupar_mesa(id_mesa)
 
             #una vez creado vamos a insertarlo
             try:
@@ -286,66 +265,3 @@ class RegistrarPedido_Service:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=f"Error al enviar el correo: {e}")
 
-
-    """
-    ################################################################################################################
-    Temporales
-    ################################################################################################################
-    """
-    def create_user_temporal(self, result_dict: dict):
-        id_usuario = str(uuid.uuid4())
-        nickname = 'Usuario_generico_'+uuid.uuid4().hex[:4]
-        service_user = UsuarioService(self.db)
-        nombre_titular = result_dict.get("titular")
-
-
-        try:
-            # Crear usuario
-            service_user.create_user(
-                id_usuario=id_usuario,
-                id_nvl_usuario=8,
-                Nickname=nickname,
-                Contraseña='123456789#',
-                Nombre=nombre_titular,
-                Apellido='...',
-                Correo_electronico='correo@example.com',
-                Num_telefonico='1231231231',
-                Ruta_imagen='...',
-                estatus='True'
-            )
-
-
-            self.db.commit()
-
-            return {
-                "message": "Empleado registrado correctamente",
-                "id_usuario": id_usuario
-            }
-
-        except Exception as e:
-            self.db.rollback()
-            raise HTTPException(status_code=400, detail=f"{str(e)} giragira anatarite")
-
-
-    def create_direccion_temporal(self, id_usuario: str, result_dict: dict):
-        data_dict = Direcciones_usuarioSchema(
-            id_usuario=id_usuario,
-            alias="Temporal" + uuid.uuid4().hex[:4],
-            Calle=",",
-            No_ext=",",
-            No_int=",",
-            Colonia=",",
-            CP=",",
-            Ciudad=",",
-            Municipio=",",
-            Estado=",",
-            instrucciones_add=result_dict.get("direccion"),
-            temporal="1"
-        )
-
-        direcciones_service = Direcciones_usuarioService(self.db)
-        res = direcciones_service.create_direcciones_usuario(data_dict)
-
-        self.db.commit()
-
-        return {"id_direccion": res.get("id_direccion")}

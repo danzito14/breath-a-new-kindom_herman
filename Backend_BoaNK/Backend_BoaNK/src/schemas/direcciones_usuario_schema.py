@@ -16,4 +16,3 @@ class Direcciones_usuarioSchema(BaseModel):
         description="Si es true, será la dirección predeterminada al comprar."
     )
     instrucciones_add: Optional[str] = Field(None, max_length=200)
-    temporal: Optional[bool] = None

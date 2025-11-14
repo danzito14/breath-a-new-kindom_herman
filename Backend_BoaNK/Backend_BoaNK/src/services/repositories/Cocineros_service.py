@@ -1,9 +1,8 @@
 import uuid
 
 from fastapi import Depends, HTTPException
-from pyDatalog.examples.python import result
 from sqlalchemy.orm import Session
-from sqlalchemy import insert, select, update, and_, true
+from sqlalchemy import insert,select, update
 
 from src.db.model.cocineros_model import cocina
 from src.schemas.cocineros_schemas import CocinaSchema
@@ -120,64 +119,4 @@ class CocinerosService:
 
         except Exception as e:
             self.db.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
-
-
-    def update_cocinero_plato(self, id_usuario: str, data: dict):
-        try:
-            # Verificar que no haya otro cocinero con el mismo id_usuario
-            if "id_usuario" in data:
-                existe = self.db.execute(
-                    select(cocina)
-                    .where(
-                        cocina.c.id_usuario == data["id_usuario"],
-                        cocina.c.id_usuario != id_usuario
-                    )
-                ).first()
-
-                if existe:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"{data['id_usuario']} ya es cocinero"
-                    )
-
-            stmt = (
-                update(cocina)
-                .where(and_(cocina.c.id_usuario == id_usuario,  cocina.c.estatus == true()))
-                .values(**data)
-            )
-
-            result = self.db.execute(stmt)
-            self.db.commit()
-
-            if result.rowcount == 0:
-                raise HTTPException(
-                    status_code=404,
-                    detail="No se pudo actualizar los datos de Cocinero"
-                )
-
-            return {"message":"Datos actualizados correctamente"}
-
-        except Exception as e:
-            self.db.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
-
-    def tiene_plato(self, id_usuario: str):
-        try:
-            result = self.db.execute(
-                select(cocina).where(cocina.c.id_usuario == id_usuario)
-            ).first()
-
-            if not result:
-                return None  # No existe el cocinero
-
-            data = dict(result._mapping)  # Convierte la fila a dict
-
-            # Si id_detalle tiene algo, devolvemos la tupla dentro de una lista
-            if data.get("id_detalle") is not None:
-                return [data]  # 🔹 Devuelves una lista con una sola tupla
-            else:
-                return None
-
-        except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))

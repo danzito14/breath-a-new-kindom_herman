@@ -21,11 +21,6 @@ def get_all_mesas (db:Session = Depends(get_db)):
     service = MesaService(db)
     return  service.get_all_mesas()
 
-@mesas.get("/mesas/get_all_mesas_ocupadas", summary="Obten todas las mesas")
-def get_all_mesas (db:Session = Depends(get_db)):
-    service = MesaService(db)
-    return  service.get_all_mesas_ocupadas()
-
 @mesas.get("/mesas/get_mesa/{Nombre_mesa}", summary="Obtener una mesa")
 def get_mesa (Nombre_mesa: str, db:Session = Depends(get_db)):
     service = MesaService(db)

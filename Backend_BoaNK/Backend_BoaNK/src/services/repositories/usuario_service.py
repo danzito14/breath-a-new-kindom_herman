@@ -51,13 +51,8 @@ class UsuarioService:
             raise HTTPException(status_code=400, detail="No se recibió ningún dato")
 
         # Verificar si el correo o nickname ya existen
-        if(user_dict["id_nvl_usuario"] != 8):
-            print("entro a la funcion")
-            if self.db.execute(select(usuarios).where(usuarios.c.Correo_electronico == user_dict["Correo_electronico"]) ).first():
-                raise HTTPException(status_code=400, detail="Correo electrónico ya registrado")
-        else:
-            print(user_dict["id_nvl_usuario"])
-            print(user_dict["Correo_electronico"])
+        if self.db.execute(select(usuarios).where(usuarios.c.Correo_electronico == user_dict["Correo_electronico"])).first():
+            raise HTTPException(status_code=400, detail="Correo electrónico ya registrado")
 
         if self.db.execute(select(usuarios).where(usuarios.c.Nickname == user_dict["Nickname"])).first():
             raise HTTPException(status_code=400, detail="Nickname ya existente")
