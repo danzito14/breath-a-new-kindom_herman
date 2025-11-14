@@ -53,6 +53,37 @@ class MesaService:
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
+
+
+    def get_all_mesas_ocupadas(self):
+        try:
+            stmt = (
+                self.db.query(
+                    mesa.c.id_mesa,
+                    mesa.c.Nombre_mesa,
+                    mesa.c.Capacidad,
+                    pedido.c.id_pedido.label("id_pedido"),
+                    mesa.c.Estado.label("Estado"),
+                    mesa.c.estatus_bool
+                )
+                .outerjoin(
+                    pedido,
+                    (pedido.c.id_mesa == mesa.c.id_mesa)
+                    & (not_(pedido.c.Estado.in_(["Pagada", "Cancelado"])))
+                )
+                .filter(
+                    mesa.c.Estado == 'Ocupada',
+                    mesa.c.estatus_bool == 1
+                )
+                .order_by(mesa.c.Nombre_mesa)
+                .all()
+            )
+            return [dict(row._mapping) for row in stmt]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+
+
     def get_mesa(self, Nombre_mesa:str):
         try:
             stmt = select(mesa).where(mesa.c.Nombre_mesa.ilike(f"%{Nombre_mesa}%"))

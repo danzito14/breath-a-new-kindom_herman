@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 from datetime import date, datetime
 from typing import List, Optional
 
@@ -19,6 +20,10 @@ from src.schemas.pedidos.pedidostemporal_schema import pedido_temporalSchema
 from src.services.repositories.mesa_service import MesaService
 from src.services.system.email.email_service import EmailService
 
+from src.services.repositories.usuario_service import UsuarioService
+from src.services.repositories.direcciones_usuario_service import Direcciones_usuarioService
+from src.schemas.direcciones_usuario_schema import Direcciones_usuarioSchema
+
 
 class Producto(BaseModel):
     cant: int
@@ -34,9 +39,11 @@ class CorreoResumen(BaseModel):
     id_pedido: Optional[str] = None
 
 class RegistrarPedido_Service:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: Session = Depends(get_db), ws_manager=None,
+                 background_tasks: Optional[BackgroundTasks] = None):
         self.db = db
-
+        self.ws_manager = ws_manager
+        self.background_tasks = background_tasks
     """
         Por si me pierdo, lo que voy a hacer es tomar los valores de temporal pedido, y los voy a registrar
         en pedido y detalle pedido, despues voy a borrar los platillos del carrito y vaciar la tupla de temporal pedido y por ultimo enviar el correo
@@ -62,12 +69,54 @@ class RegistrarPedido_Service:
         row_dict = dict(result._mapping)
         datos_temporal = pedido_temporalSchema(**row_dict)
 
-        if not data.id_pedido:
-            variable = self.create_pedido(id_usuario, datos_temporal)
+        if nvl_usuario == '4':
+            """
+                Si es nvl 4 eso quiere decir que es el cajero que esta haciendo un pedido aun cliente común por lo que se le tiene que hacer una
+                cuenta temporal y una direccion temporal que al cancelar o entregar el pedido se tiene que eliminar
+            """
+            result_m = self.create_user_temporal(row_dict)
+            var_id_usuario = result_m.get('id_usuario')
+
+            id_direccion = self.create_direccion_temporal(var_id_usuario, row_dict)
+
+            datos_temporal.id_direccion = id_direccion["id_direccion"]
+            datos_temporal.id_usuario = var_id_usuario
+
+            variable = self.create_pedido(var_id_usuario, datos_temporal)
             id_pedido_cabeza = variable.get("id_pedido")
+            # 🔥 CORREGIDO: Usar background_tasks en lugar de asyncio.create_task
+            if self.ws_manager and self.background_tasks:
+                self.background_tasks.add_task(
+                    self._notificar_nuevo_pedido,
+                    id_pedido_cabeza,
+                    datos_temporal
+                )
         else:
-            id_pedido_cabeza = data.id_pedido
-            self.actualizar_pedido(id_pedido_cabeza, data.precio)
+
+            if not data.id_pedido:
+                variable = self.create_pedido(id_usuario, datos_temporal)
+                id_pedido_cabeza = variable.get("id_pedido")
+
+
+                # 🔥 CORREGIDO: Usar background_tasks en lugar de asyncio.create_task
+                if self.ws_manager and self.background_tasks:
+                    self.background_tasks.add_task(
+                        self._notificar_nuevo_pedido,
+                        id_pedido_cabeza,
+                        datos_temporal
+                    )
+
+            else:
+                id_pedido_cabeza = data.id_pedido
+                self.actualizar_pedido(id_pedido_cabeza, data.precio)
+
+                # 🔥 CORREGIDO: Usar background_tasks
+                if self.ws_manager and self.background_tasks:
+                    self.background_tasks.add_task(
+                        self._notificar_actualizacion_pedido,
+                        id_pedido_cabeza
+                    )
+
 
        #sacamos el id o ids de datos_pedido que contiene ["id1","id2",...]
         array_ids_carrito = datos_temporal.datos_pedido
@@ -144,9 +193,10 @@ class RegistrarPedido_Service:
         Aqui vamos a enviarle ya sea 1 id o varios ids carrito para que saque los datos y los registre automaticamente en la 
         tabla detalle_pedido 
     """
-
     def create_pedido_detalle(self, id_pedido: str, ids_carrito: List[str]):
         try:
+            platillos_agregados = []
+
             for id_p in ids_carrito:
                 # 1️⃣ Obtenemos los datos del carrito
                 query = select(detalle_carrito).where(detalle_carrito.c.id_detalle_carrito == id_p)
@@ -178,13 +228,73 @@ class RegistrarPedido_Service:
                 stmt = insert(detalle_pedido).values(**detalle_pedido_dict.dict(exclude_unset=True))
                 self.db.execute(stmt)
 
+                # 🔥 NUEVO: Recopilar info para notificación
+                platillos_agregados.append({
+                    "id_detalle": detalle_pedido_dict.id_detalle,
+                    "id_platillo": detalle_pedido_dict.id_platillo,
+                    "nombre_platillo": result2._mapping.get("nombre", "Platillo"),
+                    "tiempo_preparacion": detalle_pedido_dict.tiempo_total
+                })
+
             # 5️⃣ Confirmamos la transacción
             self.db.commit()
+
+            # 🔥 CORREGIDO: Notificar a cocina usando background_tasks
+            if self.ws_manager and self.background_tasks and platillos_agregados:
+                self.background_tasks.add_task(
+                    self._notificar_cocina_platillos,
+                    id_pedido,
+                    platillos_agregados
+                )
+
             return {"message": "Detalle de pedido registrado correctamente"}
 
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=f"Error al registrar el pedido detalle: {e}")
+
+        # 🔥 NUEVO: Métodos asíncronos para WebSocket
+
+    async def _notificar_nuevo_pedido(self, id_pedido: str, datos_temporal):
+        """Notifica a cocina y meseros sobre nuevo pedido"""
+        mensaje = {
+            "tipo": "nuevo_pedido",
+            "id_pedido": id_pedido,
+            "tipo_pedido": "Local" if datos_temporal.id_mesa else "Entrega",
+            "id_mesa": datos_temporal.id_mesa,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        # Notificar a cocina
+        await self.ws_manager.send_to_role("cocina", mensaje)
+
+        # Notificar a meseros si es pedido local
+        if datos_temporal.id_mesa:
+            await self.ws_manager.send_to_role("meseros", mensaje)
+
+    async def _notificar_actualizacion_pedido(self, id_pedido: str):
+        """Notifica actualización de pedido existente"""
+        mensaje = {
+            "tipo": "actualizacion_pedido",
+            "id_pedido": id_pedido,
+            "timestamp": datetime.now().isoformat()
+        }
+        await self.ws_manager.send_to_role("cocina", mensaje)
+        await self.ws_manager.send_to_role("meseros", mensaje)
+
+    async def _notificar_cocina_platillos(self, id_pedido: str, platillos: List[dict]):
+        """Notifica a cocina los platillos que deben preparar"""
+        mensaje = {
+            "tipo": "nuevos_platillos",
+            "id_pedido": id_pedido,
+            "platillos": platillos,
+            "cantidad": len(platillos),
+            "timestamp": datetime.now().isoformat()
+        }
+        await self.ws_manager.send_to_role("cocina", mensaje)
+
+
+
 
 
     def delete_carritos(self,id_temporal, array_carrito: List[str]):
@@ -265,3 +375,68 @@ class RegistrarPedido_Service:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=f"Error al enviar el correo: {e}")
 
+
+
+
+    """
+    ################################################################################################################
+    Temporales
+    ################################################################################################################
+    """
+    def create_user_temporal(self, result_dict: dict):
+        id_usuario = str(uuid.uuid4())
+        nickname = 'Usuario_generico_'+uuid.uuid4().hex[:4]
+        service_user = UsuarioService(self.db)
+        nombre_titular = result_dict.get("titular")
+
+
+        try:
+            # Crear usuario
+            service_user.create_user(
+                id_usuario=id_usuario,
+                id_nvl_usuario=8,
+                Nickname=nickname,
+                Contraseña='123456789#',
+                Nombre=nombre_titular,
+                Apellido='...',
+                Correo_electronico='correo@example.com',
+                Num_telefonico='1231231231',
+                Ruta_imagen='...',
+                estatus='True'
+            )
+
+
+            self.db.commit()
+
+            return {
+                "message": "Empleado registrado correctamente",
+                "id_usuario": id_usuario
+            }
+
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=f"{str(e)} giragira anatarite")
+
+
+    def create_direccion_temporal(self, id_usuario: str, result_dict: dict):
+        data_dict = Direcciones_usuarioSchema(
+            id_usuario=id_usuario,
+            alias="Temporal" + uuid.uuid4().hex[:4],
+            Calle=",",
+            No_ext=",",
+            No_int=",",
+            Colonia=",",
+            CP=",",
+            Ciudad=",",
+            Municipio=",",
+            Estado=",",
+            instrucciones_add=result_dict.get("direccion"),
+            temporal="1"
+        )
+
+        direcciones_service = Direcciones_usuarioService(self.db)
+        res = direcciones_service.create_direcciones_usuario(data_dict)
+
+        self.db.commit()
+
+        return {"id_direccion": res.get("id_direccion")}

@@ -17,3 +17,5 @@ class pedido_temporalSchema(BaseModel):
     direccion: Optional[str] = None
     id_mesa: Optional[str] = None
     id_direccion: Optional[str] = None
+
+    titular: Optional[str] = None

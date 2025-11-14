@@ -31,7 +31,7 @@ class Direcciones_usuarioService:
         try:
             self.db.execute(stmt)
             self.db.commit()
-            return {"message": "Direccion agregado"}
+            return {"message": "Direccion agregado", "id_direccion": direccion_usuario_dict["id_direccion"]}
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
