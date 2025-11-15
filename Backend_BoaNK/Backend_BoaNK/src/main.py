@@ -28,7 +28,7 @@ from src.routers.sys.pedidos.pago_router import pago_router
 from src.routers.sys.pedidos.pedido_gets_router import pedido_gets
 from src.routers.sys.pedidos.pedidos_temporal_router import temporal
 from src.routers.sys.pedidos.registrar_pedido_router import registar
-from src.services.system.pedidos.pedidos_estado import PedidoService_Gets
+from src.routers.sys.websocket_router import websocket_router
 from src.utils.cp_router import utils
 from src.utils.utils_empleados import untils_empleados
 
@@ -72,4 +72,5 @@ app.include_router(registar)
 app.include_router(untils_empleados)
 app.include_router(pedido_gets)
 app.include_router(pago_router)
+app.include_router(websocket_router)
 

@@ -1,9 +1,11 @@
 import uuid
+from datetime import datetime
+from operator import not_
 
 from typing import List, Optional
 
-from fastapi import Depends, HTTPException
-from sqlalchemy import select, delete, update, literal, func, desc, case, text
+from fastapi import Depends, HTTPException, BackgroundTasks
+from sqlalchemy import select, delete, update, literal, func, desc, case, text, and_
 from sqlalchemy.orm import Session
 
 from src.core.db_credentials import get_db
@@ -13,16 +15,18 @@ from src.db.model.pedidos.pedidos_model import pedido, detalle_pedido
 from src.db.model.platillo_model import platillo
 from src.db.model.usuario_model import usuarios
 
+# 🔥 IMPORTAR EL GESTOR DE WEBSOCKET
+from src.core.websocket_manager import manager
+
 """"
     Aqui se la info de los pedidos ya sea para cocinero, mesero, usuario etc
 """
 
-from sqlalchemy import select, and_, not_
-
-
 class PedidoService_Gets:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: Session = Depends(get_db),
+                 background_tasks: Optional[BackgroundTasks] = None):
         self.db = db
+        self.background_tasks = background_tasks
 
     def get_pedidos_mesero(self):
         query = (
@@ -213,6 +217,11 @@ class PedidoService_Gets:
 
             self.db.commit()
 
+            self.background_tasks.add_task(
+                self._notificar_platillo_cancelado,
+                result
+            )
+
             return {"message": "Pedido cancelado correctamente"}
 
         except Exception as e:
@@ -331,7 +340,7 @@ class PedidoService_Gets:
     def get_platillos_listos(self):
 
         query = text("""
-                  SELECT * FROM vista_pedido_detalle_destino where estado = 'listo' order by Fecha ASC
+                  SELECT * FROM vista_pedido_detalle_destino where estado = 'listo' and Tipo_pedido = 'Local' order by Fecha ASC
           """)
         result = self.db.execute(query)
 
@@ -349,7 +358,29 @@ class PedidoService_Gets:
 
     def cambiar_estatus(self, id_detalle: str, estado: str):
         try:
+            # Primero obtenemos la info del platillo ANTES de actualizar
+            query = select(
+                detalle_pedido.c.id_detalle,
+                detalle_pedido.c.id_pedido,
+                detalle_pedido.c.id_platillo,
+                detalle_pedido.c.estado,
+                platillo.c.Nombre_platillo,
+                pedido.c.id_mesa,
+                pedido.c.Tipo_pedido,
+                mesa.c.Nombre_mesa
+            ).select_from(
+                detalle_pedido
+                .join(platillo, detalle_pedido.c.id_platillo == platillo.c.id_platillo)
+                .join(pedido, detalle_pedido.c.id_pedido == pedido.c.id_pedido)
+                .outerjoin(mesa, pedido.c.id_mesa == mesa.c.id_mesa)
+            ).where(detalle_pedido.c.id_detalle == id_detalle)
 
+            resultado = self.db.execute(query).first()
+
+            if not resultado:
+                raise HTTPException(status_code=404, detail="Platillo no encontrado")
+
+            # Actualizar el estado
             self.db.execute(
                 update(detalle_pedido)
                 .where(detalle_pedido.c.id_detalle == id_detalle)
@@ -358,10 +389,69 @@ class PedidoService_Gets:
 
             self.db.commit()
 
+            # 🔥 Si el estado cambió a 'listo', notificar a los meseros
+            if estado == 'listo':
+                if self.background_tasks:
+                    self.background_tasks.add_task(
+                        self._notificar_platillo_listo,
+                        resultado
+                    )
+                else:
+                    # Si no hay background_tasks disponible, lo hacemos síncrono
+                    import asyncio
+                    asyncio.create_task(self._notificar_platillo_listo(resultado))
+
             return {
-                "message": f"estado del platillo cambiado a {estado}",
+                "message": f"Estado del platillo cambiado a {estado}",
+                "id_detalle": id_detalle,
+                "estado": estado
             }
 
         except Exception as e:
             self.db.rollback()
-            raise HTTPException(status_code=400, detail=f"Error al cancelar platillo: {e}")
+            raise HTTPException(status_code=400, detail=f"Error al cambiar estado: {e}")
+
+    # 🔥 MÉTODO PARA NOTIFICAR A MESEROS VÍA WEBSOCKET
+    async def _notificar_platillo_listo(self, platillo_info):
+        """Notifica a los meseros que un platillo está listo"""
+        try:
+            mensaje = {
+                "tipo": "platillo_listo",
+                "id_detalle": platillo_info.id_detalle,
+                "id_pedido": platillo_info.id_pedido,
+                "nombre_platillo": platillo_info.Nombre_platillo,
+                "tipo_pedido": platillo_info.Tipo_pedido,
+                "id_mesa": platillo_info.id_mesa,
+                "nombre_mesa": platillo_info.Nombre_mesa,
+                "timestamp": datetime.now().isoformat()
+            }
+
+            # 🔥 Enviar notificación a TODOS los meseros conectados
+            await manager.broadcast_to_group(mensaje, "meseros")
+            print(f"✅ Notificación enviada a meseros: Platillo {platillo_info.nombre_platillo} listo")
+
+        except Exception as e:
+            print(f"❌ Error al enviar notificación WebSocket a meseros: {e}")
+
+    # 🔥 OPCIONAL: Método para notificar también a cocineros cuando se cancela
+    async def _notificar_platillo_cancelado(self, platillo_info):
+        """Notifica cuando un platillo es cancelado"""
+        try:
+            mensaje = {
+                "tipo": "platillo_cancelado",
+                "id_detalle": platillo_info.id_detalle,
+                "id_pedido": platillo_info.id_pedido,
+                "nombre_platillo": platillo_info.nombre_platillo,
+                "tipo_pedido": platillo_info.Tipo_pedido,
+                "id_mesa": platillo_info.id_mesa,
+                "nombre_mesa": platillo_info.Nombre_mesa,
+                "timestamp": datetime.now().isoformat()
+            }
+
+            # Notificar tanto a meseros como a cocineros
+            await manager.broadcast_to_group(mensaje, "meseros")
+            await manager.broadcast_to_group(mensaje, "cocineros")
+            print(f"✅ Notificación de cancelación enviada: {platillo_info.nombre_platillo}")
+
+        except Exception as e:
+            print(f"❌ Error al enviar notificación de cancelación: {e}")

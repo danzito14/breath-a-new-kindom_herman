@@ -114,7 +114,8 @@ class RegistrarPedido_Service:
             )
 
             id_mesa = temporal_dict.get("id_mesa")
-            self.ocupar_mesa(id_mesa)
+            if id_mesa:
+                self.ocupar_mesa(id_mesa)
 
             try:
                 body_dict = pedido_cabeza_dict.dict(exclude_unset=True)

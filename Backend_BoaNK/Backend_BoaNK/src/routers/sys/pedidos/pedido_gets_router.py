@@ -1,7 +1,7 @@
 from sys import prefix
 from typing import Optional
 
-from fastapi import  APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from src.core.db_credentials import get_db
@@ -47,6 +47,8 @@ def lista_platillos_pendientes(db: Session = Depends(get_db)):
     return service.get_platillos_listos()
 
 @pedido_gets.put("/actualizar_estado_platillo", summary="Cambiar el estado de un platillo")
-def actualizar_estado_plato(id_detalle:str, estado:str, db:Session = Depends(get_db)):
-    service = PedidoService_Gets(db)
+def actualizar_estado_plato(id_detalle:str, estado:str, background_tasks: BackgroundTasks,
+                            db:Session = Depends(get_db)):
+    service = PedidoService_Gets(db, background_tasks)
     return service.cambiar_estatus(id_detalle, estado)
+

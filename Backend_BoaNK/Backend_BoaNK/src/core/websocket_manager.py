@@ -11,7 +11,8 @@ class ConnectionManager:
         self.active_connections: Dict[str, List[WebSocket]] = {
             "cocineros": [],
             "meseros": [],
-            "admin": []
+            "admin": [],
+            "repartidor": []
         }
 
     async def connect(self, websocket: WebSocket, user_type: str):
