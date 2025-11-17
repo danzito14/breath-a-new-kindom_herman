@@ -14,6 +14,12 @@ def tiene_plato(curren_user: str = Depends(get_current_user), db: Session = Depe
     id_usuario = curren_user
     return  service.tiene_plato(id_usuario)
 
+@_cocineros.get("/cocineros/asignar_plato", summary="Ver si tiene plato para ver si le damos uno o no")
+def tiene_plato(curren_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    service = CocinerosService(db)
+    id_usuario = curren_user
+    return  service.asignar_plato(id_usuario)
+
 @_cocineros.post("/cocineros/create_cocinero", summary="Crea un nuevo cocinero")
 def create_cocineros(data: CocinaSchema, db: Session = Depends(get_db)):
     service = CocinerosService(db)

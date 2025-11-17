@@ -135,7 +135,7 @@ class RegistrarPedido_Service:
             stmt = (
                 update(pedido)
                 .where(pedido.c.id_pedido == id_pedido)
-                .values(total=pedido.c.total + literal(precio))
+                .values(total=pedido.c.total + literal(precio),Estado="Preparando")
             )
             self.db.execute(stmt)
             self.db.commit()
@@ -207,6 +207,7 @@ class RegistrarPedido_Service:
 
             # Enviar notificación a todos los cocineros conectados
             await manager.broadcast_to_group(mensaje, "cocineros")
+            await manager.broadcast_to_group(mensaje, "meseros")
             print(f"✅ Notificación WebSocket enviada a cocineros: {id_pedido}")
 
         except Exception as e:

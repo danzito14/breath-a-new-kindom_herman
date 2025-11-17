@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from operator import not_
-
 from typing import List, Optional
 
 from fastapi import Depends, HTTPException, BackgroundTasks
@@ -46,8 +45,8 @@ class PedidoService_Gets:
             .where(
                 and_(
                     mesa.c.Estado == "Ocupada",
-                    not_(pedido.c.Estado.in_(["Entregado", "Cancelado", "Pagada"])),
-                    not_(detalle_pedido.c.estado.in_(["cancelado"]))
+                    pedido.c.Estado.notin_([ "Cancelado", "Pagada"]),
+                    detalle_pedido.c.estado.notin_(["cancelado"])
                 )
             )
         )
@@ -80,7 +79,9 @@ class PedidoService_Gets:
 
     def cancelar_platillo(self, id_detalle: str, id_pedido: str, id_mesa: Optional[str] = None):
         try:
-            # 1️⃣ Obtener el precio del detalle
+            cancelar_pedido = False
+
+            # 1️⃣ Obtener precio del detalle
             precio_result = self.db.execute(
                 select(detalle_pedido.c.Precio_unitario)
                 .where(detalle_pedido.c.id_detalle == id_detalle)
@@ -91,52 +92,40 @@ class PedidoService_Gets:
 
             precio_platillo = precio_result[0]
 
-            # 2️⃣ Cancelar este platillo
+            # 2️⃣ Cambiar estado a cancelado
             self.db.execute(
                 update(detalle_pedido)
                 .where(detalle_pedido.c.id_detalle == id_detalle)
                 .values(estado="cancelado")
             )
 
-            # 3️⃣ Ver cuántos platillos aún NO están cancelados
-            platillos_activos = self.db.execute(
-                select(func.count()).select_from(detalle_pedido)
-                .where(
-                    detalle_pedido.c.id_pedido == id_pedido,
-                    detalle_pedido.c.estado != "cancelado"
-                )
-            ).scalar()
+            # 3️⃣ Restar del total siempre que no se cancele completamente
+            self.db.execute(
+                update(pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+                .values(total=pedido.c.total - precio_platillo)
+            )
 
-            if platillos_activos > 0:
-                # 4️⃣ Aún hay platillos activos → solo restamos del total
-                self.db.execute(
-                    update(pedido)
-                    .where(pedido.c.id_pedido == id_pedido)
-                    .values(total=pedido.c.total - precio_platillo)
-                )
-            else:
-                # 5️⃣ YA NO QUEDAN PLATILLOS → cancelar pedido completo
-                self.db.execute(
-                    update(pedido)
-                    .where(pedido.c.id_pedido == id_pedido)
-                    .values(
-                        total=0,
-                        Estado="Cancelado"
-                    )
-                )
-                if id_mesa is not None:
-                    self.db.execute(
-                        update(mesa)
-                        .where(mesa.c.id_mesa == id_mesa)
-                        .values(
-                            Estado="Libre"
-                        )
-                    )
             self.db.commit()
 
+            # 4️⃣ Recalcular el estado completo del pedido
+            nuevo_estado = self._actualizar_estado_pedido(id_pedido, id_mesa)
+
+            if nuevo_estado == "Cancelado":
+                # Se canceló TODO el pedido → enviar notificacion de PEDIDO cancelado
+                self.background_tasks.add_task(
+                    self._notificar_pedido_cancelado,
+                    id_pedido
+                )
+            else:
+                # Solo se canceló un platillo → enviar notificacion de PLATILLO cancelado
+                self.background_tasks.add_task(
+                    self._notificar_platillo_cancelado,
+                    id_detalle
+                )
+
             return {
-                "message": "Platillo cancelado",
-                "pedido_cancelado": platillos_activos == 0
+                "message": "Platillo cancelado"
             }
 
         except Exception as e:
@@ -218,9 +207,11 @@ class PedidoService_Gets:
             self.db.commit()
 
             self.background_tasks.add_task(
-                self._notificar_platillo_cancelado,
-                result
+                self._notificar_pedido_cancelado,
+                id_pedido
             )
+
+
 
             return {"message": "Pedido cancelado correctamente"}
 
@@ -228,6 +219,67 @@ class PedidoService_Gets:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=f"Error al cancelar pedido: {e}")
 
+
+
+    def _actualizar_estado_pedido(self, id_pedido: str, id_mesa: Optional[str] = None):
+        # Obtener estados de todos los platillos del pedido
+        estados = self.db.execute(
+            select(detalle_pedido.c.estado)
+            .where(detalle_pedido.c.id_pedido == id_pedido)
+        ).fetchall()
+
+        if not estados:
+            return  # No hay platillos
+
+        estados = [e[0].lower() for e in estados]
+
+        # Si TODOS están cancelados → cancelar pedido completo
+        if all(e == "cancelado" for e in estados):
+            self.db.execute(
+                update(pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+                .values(Estado="Cancelado", total=0)
+            )
+            if id_mesa:
+                self.db.execute(
+                    update(mesa)
+                    .where(mesa.c.id_mesa == id_mesa)
+                    .values(Estado="Libre")
+                )
+            self.db.commit()
+            return "Cancelado"
+
+        # Si hay pendiente o cocinando → sigue preparando
+        if any(e in ("pendiente", "cocinando") for e in estados):
+            self.db.execute(
+                update(pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+                .values(Estado="Preparando")
+            )
+            self.db.commit()
+            return "Preparando"
+
+        # Si hay al menos un "listo" → pedido listo
+        if any(e == "listo" for e in estados):
+            self.db.execute(
+                update(pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+                .values(Estado="Listo")
+            )
+            self.db.commit()
+            return "Listo"
+
+        # Si todos son "servido" → pedido entregado
+        if all(e == "servido" for e in estados if e != "cancelado"):
+            self.db.execute(
+                update(pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+                .values(Estado="Entregado")
+            )
+            self.db.commit()
+            return "Entregado"
+
+        return None
     """
         Para mostrar los pedidos de mesa y a domicilio,
         seria primero definir quien puede ver todo eso:
@@ -358,7 +410,7 @@ class PedidoService_Gets:
 
     def cambiar_estatus(self, id_detalle: str, estado: str):
         try:
-            # Primero obtenemos la info del platillo ANTES de actualizar
+            # Obtener información del platillo antes de actualizar
             query = select(
                 detalle_pedido.c.id_detalle,
                 detalle_pedido.c.id_pedido,
@@ -380,16 +432,23 @@ class PedidoService_Gets:
             if not resultado:
                 raise HTTPException(status_code=404, detail="Platillo no encontrado")
 
-            # Actualizar el estado
+            id_pedido = resultado.id_pedido
+            id_mesa = resultado.id_mesa
+
+            # Actualizar estado del platillo
             self.db.execute(
                 update(detalle_pedido)
                 .where(detalle_pedido.c.id_detalle == id_detalle)
                 .values(estado=estado)
             )
 
+            # Commit del cambio del platillo
             self.db.commit()
 
-            # 🔥 Si el estado cambió a 'listo', notificar a los meseros
+            # ⭐ AHORA recalcular estado del pedido CORRECTAMENTE
+            nuevo_estado = self._actualizar_estado_pedido(id_pedido, id_mesa)
+
+            # 🔥 Notificar si el platillo se marcó como listo
             if estado == 'listo':
                 if self.background_tasks:
                     self.background_tasks.add_task(
@@ -397,14 +456,14 @@ class PedidoService_Gets:
                         resultado
                     )
                 else:
-                    # Si no hay background_tasks disponible, lo hacemos síncrono
                     import asyncio
                     asyncio.create_task(self._notificar_platillo_listo(resultado))
 
             return {
                 "message": f"Estado del platillo cambiado a {estado}",
                 "id_detalle": id_detalle,
-                "estado": estado
+                "estado": estado,
+                "nuevo_estado_pedido": nuevo_estado
             }
 
         except Exception as e:
@@ -428,30 +487,53 @@ class PedidoService_Gets:
 
             # 🔥 Enviar notificación a TODOS los meseros conectados
             await manager.broadcast_to_group(mensaje, "meseros")
+            await manager.broadcast_to_group(mensaje, "cocineros")
+
             print(f"✅ Notificación enviada a meseros: Platillo {platillo_info.nombre_platillo} listo")
 
         except Exception as e:
             print(f"❌ Error al enviar notificación WebSocket a meseros: {e}")
 
     # 🔥 OPCIONAL: Método para notificar también a cocineros cuando se cancela
-    async def _notificar_platillo_cancelado(self, platillo_info):
+    async def _notificar_platillo_cancelado(self, id_pedido):
         """Notifica cuando un platillo es cancelado"""
         try:
             mensaje = {
                 "tipo": "platillo_cancelado",
-                "id_detalle": platillo_info.id_detalle,
-                "id_pedido": platillo_info.id_pedido,
-                "nombre_platillo": platillo_info.nombre_platillo,
-                "tipo_pedido": platillo_info.Tipo_pedido,
-                "id_mesa": platillo_info.id_mesa,
-                "nombre_mesa": platillo_info.Nombre_mesa,
-                "timestamp": datetime.now().isoformat()
+                "id_detalle":id_pedido
             }
 
             # Notificar tanto a meseros como a cocineros
             await manager.broadcast_to_group(mensaje, "meseros")
             await manager.broadcast_to_group(mensaje, "cocineros")
-            print(f"✅ Notificación de cancelación enviada: {platillo_info.nombre_platillo}")
+            print(f"✅ Notificación de cancelación enviada: {id_pedido}")
 
         except Exception as e:
             print(f"❌ Error al enviar notificación de cancelación: {e}")
+
+    async def _notificar_pedido_cancelado(self, id_pedido):
+        """Notifica cuando un platillo es cancelado"""
+        try:
+            mensaje = {
+                "tipo": "pedido_cancelado",
+                "id_pedido": id_pedido
+            }
+
+            # Notificar tanto a meseros como a cocineros
+            await manager.broadcast_to_group(mensaje, "meseros")
+            await manager.broadcast_to_group(mensaje, "cocineros")
+            print(f"✅ Notificación de cancelación enviada: {id_pedido}")
+
+        except Exception as e:
+            print(f"❌ Error al enviar notificación de cancelación: {e}")
+
+
+    """
+    ###########################################################################################################
+    """
+    def cambiar_estado_pedido(self, id_pedido:str, Estado:str):
+        self.db.execute(
+            update(pedido)
+            .where(pedido.c.id_pedido == id_pedido)
+            .values(Estado = Estado)
+        )

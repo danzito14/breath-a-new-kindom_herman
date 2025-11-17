@@ -27,13 +27,13 @@ def get_lista_by_id(id_detalle:str, db: Session = Depends(get_db)):
     return service.get_platillos_by_id(id_detalle)
 
 @pedido_gets.delete("/delete_platillo", summary="Cancela un platillo, si es el unico o el ultimo que faltaba en cancelar ccancela el pedido")
-def cancelar_platillo(id_detalle: str, id_pedido: str, id_mesa: Optional[str] = None, db: Session = Depends(get_db)):
-    service = PedidoService_Gets(db)
+def cancelar_platillo(id_detalle: str, id_pedido: str, background_tasks: BackgroundTasks, id_mesa: Optional[str] = None, db: Session = Depends(get_db)):
+    service = PedidoService_Gets(db, background_tasks)
     return  service.cancelar_platillo(id_detalle, id_pedido, id_mesa)
 
 @pedido_gets.delete("/cancelar_pedido", summary="Cancela un platillo, si es el unico o el ultimo que faltaba en cancelar ccancela el pedido")
-def cancelar_platillo(id_pedido: str, id_mesa: Optional[str] = None, db: Session = Depends(get_db)):
-    service = PedidoService_Gets(db)
+def cancelar_platillo(id_pedido: str,  background_tasks: BackgroundTasks, id_mesa: Optional[str] = None, db: Session = Depends(get_db)):
+    service = PedidoService_Gets(db, background_tasks)
     return  service.cancelar_pedido(id_pedido, id_mesa)
 
 @pedido_gets.get("/lista_pendiente", summary="Lista de platillos pendientes  a cocinar para cocineros")

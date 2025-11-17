@@ -1,11 +1,18 @@
 import uuid
 
+from sqlalchemy import select, update
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi import HTTPException
+
 from fastapi import Depends, HTTPException
 from pyDatalog.examples.python import result
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, update, and_, true
 
 from src.db.model.cocineros_model import cocina
+from src.db.model.pedidos.pedidos_model import detalle_pedido, pedido
+from src.db.model.platillo_model import platillo
 from src.schemas.cocineros_schemas import CocinaSchema
 from src.core.db_credentials import get_db
 
@@ -162,7 +169,119 @@ class CocinerosService:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
 
+    from sqlalchemy import select, update
+    from sqlalchemy.exc import SQLAlchemyError
+    from fastapi import HTTPException
+
+    from sqlalchemy import select, update
+    from sqlalchemy.exc import SQLAlchemyError
+    from fastapi import HTTPException
+
+
+
+    def asignar_plato(self, id_usuario: str):
+        """
+        Asigna atómicamente el siguiente platillo pendiente al cocinero.
+
+        Returns:
+            dict: {"id_detalle": str} si hay platillo disponible
+            None: si no hay platillos pendientes
+        """
+        try:
+            with self.db.begin():
+                # 1️⃣ Verificar que el cocinero no tenga ya un platillo asignado
+                cocinero_actual = self.db.execute(
+                    select(cocina)
+                    .where(cocina.c.id_usuario == id_usuario)
+                ).first()
+
+                if not cocinero_actual:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Cocinero no encontrado"
+                    )
+
+                cocinero_dict = dict(cocinero_actual._mapping)
+
+                # Si ya tiene platillo asignado, devolver ese
+                if cocinero_dict.get("id_detalle"):
+                    print(f"⚠️ Cocinero {id_usuario} ya tiene platillo: {cocinero_dict['id_detalle']}")
+                    return {
+                        "id_detalle": cocinero_dict["id_detalle"]
+                    }
+
+                # 2️⃣ Buscar el primer platillo pendiente libre (con bloqueo)
+                query = (
+                    select(detalle_pedido)
+                    .join(pedido, pedido.c.id_pedido == detalle_pedido.c.id_pedido)
+                    .where(detalle_pedido.c.estado == "pendiente")
+                    .order_by(pedido.c.Fecha)
+                    .with_for_update(skip_locked=True)  # 🔥 Evita conflictos entre cocineros
+                    .limit(1)
+                )
+
+                plato = self.db.execute(query).first()
+
+                if not plato:
+                    print("ℹ️ No hay platillos pendientes disponibles")
+                    return None  # No hay platos pendientes
+
+                plato = plato._mapping
+                plato_id = plato["id_detalle"]
+
+                print(f"✅ Asignando platillo {plato_id} a cocinero {id_usuario}")
+
+                # 3️⃣ Actualizar el platillo a "cocinando"
+                upd_plato = (
+                    update(detalle_pedido)
+                    .where(detalle_pedido.c.id_detalle == plato_id)
+                    .values(estado="cocinando")
+                )
+                self.db.execute(upd_plato)
+
+                # 4️⃣ Asignar el platillo al cocinero
+                upd_cocinero = (
+                    update(cocina)
+                    .where(cocina.c.id_usuario == id_usuario)
+                    .values(id_detalle=plato_id)
+                )
+                result = self.db.execute(upd_cocinero)
+
+                if result.rowcount == 0:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="No se pudo asignar el platillo al cocinero"
+                    )
+
+            # 5️⃣ Devolver solo el ID (el frontend cargará los detalles)
+            return {
+                "id_detalle": plato_id
+            }
+
+        except HTTPException:
+            raise  # Re-lanzar excepciones HTTP
+        except SQLAlchemyError as e:
+            print(f"❌ Error de base de datos: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al asignar platillo: {str(e)}"
+            )
+        except Exception as e:
+            print(f"❌ Error inesperado: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error inesperado: {str(e)}"
+            )
+
+
     def tiene_plato(self, id_usuario: str):
+        """
+        Verifica si el cocinero tiene un platillo asignado.
+
+        Returns:
+            list: [{"id_detalle": str, ...}] si tiene platillo asignado
+            None: si no tiene platillo asignado o no existe el cocinero
+        """
         try:
             result = self.db.execute(
                 select(cocina).where(cocina.c.id_usuario == id_usuario)
@@ -171,13 +290,13 @@ class CocinerosService:
             if not result:
                 return None  # No existe el cocinero
 
-            data = dict(result._mapping)  # Convierte la fila a dict
+            data = dict(result._mapping)
 
-            # Si id_detalle tiene algo, devolvemos la tupla dentro de una lista
+            # Si tiene platillo asignado, devolverlo en formato lista
             if data.get("id_detalle") is not None:
-                return [data]  # 🔹 Devuelves una lista con una sola tupla
+                return [data]
             else:
-                return None
+                return None  # Cocinero existe pero sin platillo asignado
 
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
