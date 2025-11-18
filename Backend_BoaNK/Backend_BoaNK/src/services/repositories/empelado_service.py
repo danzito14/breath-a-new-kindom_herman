@@ -11,6 +11,7 @@ from src.db.model.puesto_model import puesto
 
 from src.schemas.empleados_schema import EmpleadosSchema
 from src.services.repositories.Cocineros_service import CocinerosService
+from src.services.repositories.repartidores_service import RepartidoresService
 from src.services.repositories.usuario_service import UsuarioService
 
 class EmpleadoService:
@@ -21,6 +22,7 @@ class EmpleadoService:
         empleado_dict = data_empleado.dict(exclude_unset=True)
         service_user = UsuarioService(self.db)
         service_cocinero = CocinerosService(self.db)
+        service_repartidor = RepartidoresService(self.db)
 
         nvl_usuario = self.obtener_nvl_usuario(empleado_dict["id_puesto"])
         nickname = self.generar_nickname(empleado_dict["Nombre"], empleado_dict["Apellido"], empleado_dict["id_puesto"])
@@ -53,6 +55,13 @@ class EmpleadoService:
             if nvl_usuario == 3:
                 nombre_completo = f"{empleado_dict.get('Nombre', '')} {empleado_dict.get('Apellido', '')}".strip()
                 service_cocinero.create_cocinero(
+                    id_usuario=empleado_dict["id_usuario"],
+                    nombre=nombre_completo
+                )
+
+            if nvl_usuario == 5:
+                nombre_completo = f"{empleado_dict.get('Nombre', '')} {empleado_dict.get('Apellido', '')}".strip()
+                service_repartidor.create_repartidor(
                     id_usuario=empleado_dict["id_usuario"],
                     nombre=nombre_completo
                 )

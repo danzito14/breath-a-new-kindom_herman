@@ -7,6 +7,8 @@ from sqlalchemy import select, update, or_, func
 
 from src.services.repositories.Cocineros_service import CocinerosService
 from src.services.repositories.empelado_service import EmpleadoService
+from src.services.repositories.repartidores_service import RepartidoresService
+
 empleados = APIRouter(tags=["Empleado"])
 
 @empleados.get("/empleado")
@@ -51,17 +53,19 @@ def get_empleado(
 
 @empleados.put("/empleado/update_empleado/{id_empleado}")
 def update_empleado(id_empleado: str, data: dict = Body(...), db: Session = Depends(get_db)):
+
+    # Obtener puesto anterior
     id_puesto_ant = db.execute(
         select(empleado.c.id_puesto).where(empleado.c.id_empleado == id_empleado)
     ).scalar()
-    print(id_puesto_ant)
-    # --- Primero actualizamos los datos del empleado ---
+    print("Puesto anterior:", id_puesto_ant)
+
+    # --- Actualizar datos del empleado ---
     stmt = (
         update(empleado)
         .where(empleado.c.id_empleado == id_empleado)
         .values(**data)
     )
-
     result = db.execute(stmt)
     db.commit()
 
@@ -71,26 +75,26 @@ def update_empleado(id_empleado: str, data: dict = Body(...), db: Session = Depe
             detail="No se pudo actualizar los datos del empleado (ID no encontrado)"
         )
 
-    # --- Luego verificamos si hay que crear cocinero ---
+    # Obtener nombre completo e ID usuario
+    nombre_result = db.execute(
+        select(func.concat(
+            func.coalesce(empleado.c.Nombre, ''),
+            ' ',
+            func.coalesce(empleado.c.Apellido, '')
+        )).where(empleado.c.id_empleado == id_empleado)
+    ).scalar()
+
+    id_usuario = db.execute(
+        select(empleado.c.id_usuario).where(empleado.c.id_empleado == id_empleado)
+    ).scalar()
+
+    if not nombre_result or nombre_result.strip() == "":
+        nombre_result = None
+
+    # ===============================================================
+    # 1️⃣ LÓGICA PARA COCINEROS (Puesto 1)
+    # ===============================================================
     if "id_puesto" in data and data["id_puesto"] == 1:
-        # Buscar nombre + apellido del empleado
-        nombre_result = db.execute(
-            select(func.concat(
-                func.coalesce(empleado.c.Nombre, ''),
-                ' ',
-                func.coalesce(empleado.c.Apellido, '')
-            )).where(empleado.c.id_empleado == id_empleado)
-        ).scalar()
-
-        id_usuario = db.execute(
-            select(empleado.c.id_usuario).where(empleado.c.id_empleado == id_empleado)
-        ).scalar()
-
-
-        print(f"🔎 DEBUG: nombre_result = {nombre_result}")
-
-        if not nombre_result or nombre_result.strip() == "":
-            raise HTTPException(status_code=400, detail="No se encontró nombre completo del empleado")
 
         service_cocinero = CocinerosService(db)
         try:
@@ -98,44 +102,60 @@ def update_empleado(id_empleado: str, data: dict = Body(...), db: Session = Depe
                 id_usuario=id_usuario,
                 nombre=nombre_result
             )
-            print(f"✅ Cocinero creado: {nombre_result}")
-        except Exception as e:
-            print(f"⚠️ Error al crear cocinero: {e}")
-            # Si ya existe, intenta actualizar su estatus
-            try:
-                service_cocinero.update_cocinero(
-                    id_usuario=id_usuario,
-                    data={"estatus": True}
-                )
-                print("🔄 Cocinero existente reactivado")
-            except Exception as e2:
-                print(f"❌ Error al actualizar cocinero: {e2}")
-                raise HTTPException(status_code=400, detail=str(e2))
+            print(f"👨‍🍳 Cocinero creado: {nombre_result}")
+        except:
+            print("⚠️ Cocinero ya existía, reactivando…")
+            service_cocinero.update_cocinero(
+                id_usuario=id_usuario,
+                data={"estatus": True}
+            )
 
     elif id_puesto_ant == 1:
-        nombre_result = db.execute(
-            select(func.concat(
-                func.coalesce(empleado.c.Nombre, ''),
-                ' ',
-                func.coalesce(empleado.c.Apellido, '')
-            )).where(empleado.c.id_empleado == id_empleado)
-        ).scalar()
+        # Desactivar cocinero al cambiar de puesto
         try:
-            id_usuario = db.execute(
-                select(empleado.c.id_usuario).where(empleado.c.id_empleado == id_empleado)
-            ).scalar()
-
             service_cocinero = CocinerosService(db)
             service_cocinero.update_cocinero(
                 id_usuario=id_usuario,
                 data={"estatus": False}
             )
-            print("🔄 Cocinero existente reactivado")
-        except Exception as e2:
-            print(f"❌ Error al actualizar cocinero: {e2}")
-            raise HTTPException(status_code=400, detail=str(e2))
-    else:
-        nombre_result = None
+            print("🛑 Cocinero desactivado")
+        except Exception as e:
+            print(f"❌ Error desactivando cocinero: {e}")
 
 
-    return {"message": "Datos actualizados correctamente", "nombre": nombre_result}
+    # ===============================================================
+    # 2️⃣ LÓGICA PARA REPARTIDORES (Puesto 4)
+    # ===============================================================
+    if "id_puesto" in data and data["id_puesto"] == 4:
+
+        service_repartidor = RepartidoresService(db)
+        try:
+            service_repartidor.create_repartidor(
+                id_usuario=id_usuario,
+                nombre=nombre_result
+            )
+            print(f"🚴‍♂️ Repartidor creado: {nombre_result}")
+        except:
+            print("⚠️ Repartidor ya existía, reactivando…")
+            service_repartidor.update_repartidor(
+                id_usuario=id_usuario,
+                data={"estatus": True}
+            )
+
+    elif id_puesto_ant == 4:
+        # Desactivar repartidor al cambiar de puesto
+        try:
+            service_repartidor = RepartidoresService(db)
+            service_repartidor.update_repartidor(
+                id_usuario=id_usuario,
+                data={"estatus": False}
+            )
+            print("🛑 Repartidor desactivado")
+        except Exception as e:
+            print(f"❌ Error desactivando repartidor: {e}")
+
+
+    return {
+        "message": "Datos actualizados correctamente",
+        "nombre": nombre_result
+    }

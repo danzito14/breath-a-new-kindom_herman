@@ -17,6 +17,7 @@ from src.routers.sys.activar_cuenta import cuenta
 from src.routers.sys.home_router import home
 from src.routers.sys.login_router import router
 from src.routers.crud.cocineros_router import _cocineros
+from src.routers.crud.repartidores_router import _repartidores
 from src.routers.crud.oferta_router import ofertas
 from src.routers.crud.mesa_router import mesas
 from src.routers.crud.carrito_router import carrito
@@ -73,4 +74,5 @@ app.include_router(untils_empleados)
 app.include_router(pedido_gets)
 app.include_router(pago_router)
 app.include_router(websocket_router)
+app.include_router(_repartidores)
 
