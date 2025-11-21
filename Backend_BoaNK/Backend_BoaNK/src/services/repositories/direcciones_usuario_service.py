@@ -18,9 +18,8 @@ class Direcciones_usuarioService:
 
         existe = self.db.execute(
             select(direcciones_usuario).where(
-                and_(
-                    direcciones_usuario.c.alias == direccion_usuario_dict['alias']
-                           )
+                (direcciones_usuario.c.alias == direccion_usuario_dict['alias']) &
+                (direcciones_usuario.c.id_usuario == direccion_usuario_dict['id_usuario'])
             )
         ).first()
 

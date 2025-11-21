@@ -13,6 +13,9 @@ from src.db.model.mesa_model import mesa
 from src.db.model.pedidos.pedidos_model import pedido, detalle_pedido
 from src.db.model.platillo_model import platillo
 from src.db.model.usuario_model import usuarios
+from src.db.model.pedidos.repartidores_model import  repartidores, lista_repartidores
+
+from src.services.system.repartidores.repartidores_service import RepartidorService
 
 # 🔥 IMPORTAR EL GESTOR DE WEBSOCKET
 from src.core.websocket_manager import manager
@@ -77,6 +80,182 @@ class PedidoService_Gets:
 
         return list(mesas_dict.values())
 
+    def get_pedidos_by_id_for_repartidor(self, id_pedido: str):
+        """
+        Obtiene los datos de un pedido filtrado por el id de un pedido,
+        normalmente usado para cuando un repartidor ya tiene pedido asignado y recarga la pagina
+        """
+        direccion_label = case(
+            (direcciones_usuario.c.temporal == True, direcciones_usuario.c.instrucciones_add),
+            else_=func.concat(
+                direcciones_usuario.c.Calle, " ",
+                direcciones_usuario.c.No_ext, ", ",
+                direcciones_usuario.c.No_int, ", ",
+                direcciones_usuario.c.Colonia, ", ",
+                direcciones_usuario.c.Ciudad, ", ",
+                direcciones_usuario.c.Estado, ", CP ",
+                direcciones_usuario.c.CP, " ",
+                direcciones_usuario.c.instrucciones_add
+            )
+        ).label("direccion_completa")
+
+        query = (
+            select(
+                usuarios.c.id_usuario,
+                func.concat(usuarios.c.Nombre, " ", usuarios.c.Apellido).label("nombre_completo"),
+                pedido.c.id_pedido,
+                pedido.c.Estado.label("estado_pedido"),
+                pedido.c.Fecha,
+                pedido.c.Tipo_pedido,
+                pedido.c.total,
+                pedido.c.id_direccion,
+                detalle_pedido.c.id_detalle,
+                detalle_pedido.c.estado.label("estado_detalle"),
+                detalle_pedido.c.detalles_adicionales,
+                platillo.c.Nombre_platillo,
+                lista_repartidores.c.estado_pedido.label("estado_lista"),
+                lista_repartidores.c.fecha_asignado,
+                direccion_label
+            )
+            .join(lista_repartidores, lista_repartidores.c.id_pedido == pedido.c.id_pedido)
+            .join(usuarios, usuarios.c.id_usuario == pedido.c.id_usuario)
+            .join(detalle_pedido, detalle_pedido.c.id_pedido == pedido.c.id_pedido)
+            .join(platillo, platillo.c.id_platillo == detalle_pedido.c.id_platillo)
+            .join(direcciones_usuario, direcciones_usuario.c.id_direccion == pedido.c.id_direccion)
+            .where(
+                and_(
+                    pedido.c.id_pedido == id_pedido,
+                    lista_repartidores.c.estado_pedido.in_(["pendiente", "en_camino"]),
+                    pedido.c.Tipo_pedido == "Entrega",
+                    pedido.c.Estado.notin_(["Entregado", "Cancelado", "Pagada"]),
+                    detalle_pedido.c.estado.notin_(["cancelado"])
+                )
+            )
+            .order_by(desc(pedido.c.Fecha))
+        )
+
+        rows = self.db.execute(query).all()
+
+        # ---- Agrupar por pedido ----
+        pedidos_dict = {}
+
+        for r in rows:
+            id_pedido = r.id_pedido
+
+            if id_pedido not in pedidos_dict:
+                pedidos_dict[id_pedido] = {
+                    "id_pedido": r.id_pedido,
+                    "fecha": r.Fecha,
+                    "estado_pedido": r.estado_pedido,
+                    "estado_lista": r.estado_lista,
+                    "fecha_asignado": r.fecha_asignado,
+                    "tipo_pedido": r.Tipo_pedido,
+                    "id_usuario": r.id_usuario,
+                    "nombre_completo": r.nombre_completo,
+                    "total": r.total,
+                    "id_direccion": r.id_direccion,
+                    "direccion_completa": r.direccion_completa,
+                    "platillos": []
+                }
+
+            pedidos_dict[id_pedido]["platillos"].append({
+                "id_detalle": r.id_detalle,
+                "nombre_platillo": r.Nombre_platillo,
+                "estado_detalle": r.estado_detalle,
+                "detalles_adicionales": r.detalles_adicionales
+            })
+
+        return list(pedidos_dict.values())
+
+
+
+    def get_pedidos_repartidor(self, id_usuario: str):
+        """
+        Obtiene los pedidos asignados a un repartidor específico
+        filtrando por id_usuario en lista_repartidores
+        """
+        direccion_label = case(
+            (direcciones_usuario.c.temporal == True, direcciones_usuario.c.instrucciones_add),
+            else_=func.concat(
+                direcciones_usuario.c.Calle, " ",
+                direcciones_usuario.c.No_ext, ", ",
+                direcciones_usuario.c.No_int, ", ",
+                direcciones_usuario.c.Colonia, ", ",
+                direcciones_usuario.c.Ciudad, ", ",
+                direcciones_usuario.c.Estado, ", CP ",
+                direcciones_usuario.c.CP, " ",
+                direcciones_usuario.c.instrucciones_add
+            )
+        ).label("direccion_completa")
+
+        query = (
+            select(
+                usuarios.c.id_usuario,
+                func.concat(usuarios.c.Nombre, " ", usuarios.c.Apellido).label("nombre_completo"),
+                pedido.c.id_pedido,
+                pedido.c.Estado.label("estado_pedido"),
+                pedido.c.Fecha,
+                pedido.c.Tipo_pedido,
+                pedido.c.total,
+                pedido.c.id_direccion,
+                detalle_pedido.c.id_detalle,
+                detalle_pedido.c.estado.label("estado_detalle"),
+                detalle_pedido.c.detalles_adicionales,
+                platillo.c.Nombre_platillo,
+                lista_repartidores.c.estado_pedido.label("estado_lista"),
+                lista_repartidores.c.fecha_asignado,
+                direccion_label
+            )
+            .join(lista_repartidores, lista_repartidores.c.id_pedido == pedido.c.id_pedido)
+            .join(usuarios, usuarios.c.id_usuario == pedido.c.id_usuario)
+            .join(detalle_pedido, detalle_pedido.c.id_pedido == pedido.c.id_pedido)
+            .join(platillo, platillo.c.id_platillo == detalle_pedido.c.id_platillo)
+            .join(direcciones_usuario, direcciones_usuario.c.id_direccion == pedido.c.id_direccion)
+            .where(
+                and_(
+                    lista_repartidores.c.id_usuario == id_usuario,
+                    lista_repartidores.c.estado_pedido.in_(["pendiente", "en_camino"]),
+                    pedido.c.Tipo_pedido == "Entrega",
+                    pedido.c.Estado.notin_(["Entregado", "Cancelado", "Pagada"]),
+                    detalle_pedido.c.estado.notin_(["cancelado"])
+                )
+            )
+            .order_by(desc(pedido.c.Fecha))
+        )
+
+        rows = self.db.execute(query).all()
+
+        # ---- Agrupar por pedido ----
+        pedidos_dict = {}
+
+        for r in rows:
+            id_pedido = r.id_pedido
+
+            if id_pedido not in pedidos_dict:
+                pedidos_dict[id_pedido] = {
+                    "id_pedido": r.id_pedido,
+                    "fecha": r.Fecha,
+                    "estado_pedido": r.estado_pedido,
+                    "estado_lista": r.estado_lista,
+                    "fecha_asignado": r.fecha_asignado,
+                    "tipo_pedido": r.Tipo_pedido,
+                    "id_usuario": r.id_usuario,
+                    "nombre_completo": r.nombre_completo,
+                    "total": r.total,
+                    "id_direccion": r.id_direccion,
+                    "direccion_completa": r.direccion_completa,
+                    "platillos": []
+                }
+
+            pedidos_dict[id_pedido]["platillos"].append({
+                "id_detalle": r.id_detalle,
+                "nombre_platillo": r.Nombre_platillo,
+                "estado_detalle": r.estado_detalle,
+                "detalles_adicionales": r.detalles_adicionales
+            })
+
+        return list(pedidos_dict.values())
+
     def cancelar_platillo(self, id_detalle: str, id_pedido: str, id_mesa: Optional[str] = None):
         try:
             cancelar_pedido = False
@@ -106,6 +285,11 @@ class PedidoService_Gets:
                 .values(total=pedido.c.total - precio_platillo)
             )
 
+            tipo_pedido = self.db.execute(
+                select(pedido.c.Tipo_pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+            ).scalar()
+
             self.db.commit()
 
             # 4️⃣ Recalcular el estado completo del pedido
@@ -115,13 +299,13 @@ class PedidoService_Gets:
                 # Se canceló TODO el pedido → enviar notificacion de PEDIDO cancelado
                 self.background_tasks.add_task(
                     self._notificar_pedido_cancelado,
-                    id_pedido
+                    id_pedido, tipo_pedido
                 )
             else:
                 # Solo se canceló un platillo → enviar notificacion de PLATILLO cancelado
                 self.background_tasks.add_task(
                     self._notificar_platillo_cancelado,
-                    id_detalle
+                    id_detalle, tipo_pedido
                 )
 
             return {
@@ -204,11 +388,16 @@ class PedidoService_Gets:
                 .values(Estado="Libre")
             )
 
+            tipo_pedido = self.db.execute(
+                select(pedido.c.Tipo_pedido)
+                .where(pedido.c.id_pedido == id_pedido)
+            ).scalar()
+
             self.db.commit()
 
             self.background_tasks.add_task(
                 self._notificar_pedido_cancelado,
-                id_pedido
+                id_pedido, tipo_pedido
             )
 
 
@@ -434,6 +623,7 @@ class PedidoService_Gets:
 
             id_pedido = resultado.id_pedido
             id_mesa = resultado.id_mesa
+            tipo_pedido = resultado.Tipo_pedido
 
             # Actualizar estado del platillo
             self.db.execute(
@@ -445,8 +635,19 @@ class PedidoService_Gets:
             # Commit del cambio del platillo
             self.db.commit()
 
-            # ⭐ AHORA recalcular estado del pedido CORRECTAMENTE
+            # ⭐ Recalcular estado del pedido
             nuevo_estado = self._actualizar_estado_pedido(id_pedido, id_mesa)
+
+            # 🚀 SI EL PEDIDO COMPLETO ESTÁ LISTO Y ES PARA ENTREGA → ASIGNAR REPARTIDOR
+            pedido_asignado = False
+            if nuevo_estado == "Listo" and tipo_pedido == "Entrega":
+                if self.background_tasks:
+                    # Asignar con IA usando el servicio de repartidores
+                    self.background_tasks.add_task(
+                        self._asignar_pedido_automaticamente,
+                        id_pedido
+                    )
+                    pedido_asignado = True
 
             # 🔥 Notificar si el platillo se marcó como listo
             if estado == 'listo':
@@ -463,7 +664,9 @@ class PedidoService_Gets:
                 "message": f"Estado del platillo cambiado a {estado}",
                 "id_detalle": id_detalle,
                 "estado": estado,
-                "nuevo_estado_pedido": nuevo_estado
+                "nuevo_estado_pedido": nuevo_estado,
+                "tipo_pedido": tipo_pedido,
+                "asignacion_automatica": pedido_asignado
             }
 
         except Exception as e:
@@ -495,7 +698,7 @@ class PedidoService_Gets:
             print(f"❌ Error al enviar notificación WebSocket a meseros: {e}")
 
     # 🔥 OPCIONAL: Método para notificar también a cocineros cuando se cancela
-    async def _notificar_platillo_cancelado(self, id_pedido):
+    async def _notificar_platillo_cancelado(self, id_pedido, tipo_pedido:str):
         """Notifica cuando un platillo es cancelado"""
         try:
             mensaje = {
@@ -504,14 +707,18 @@ class PedidoService_Gets:
             }
 
             # Notificar tanto a meseros como a cocineros
-            await manager.broadcast_to_group(mensaje, "meseros")
+            if tipo_pedido == 'Local':
+                await manager.broadcast_to_group(mensaje, "meseros")
+            if tipo_pedido == 'Entrega':
+                await manager.broadcast_to_group(mensaje, "repartidor")
+
             await manager.broadcast_to_group(mensaje, "cocineros")
             print(f"✅ Notificación de cancelación enviada: {id_pedido}")
 
         except Exception as e:
             print(f"❌ Error al enviar notificación de cancelación: {e}")
 
-    async def _notificar_pedido_cancelado(self, id_pedido):
+    async def _notificar_pedido_cancelado(self, id_pedido, tipo_pedido:str):
         """Notifica cuando un platillo es cancelado"""
         try:
             mensaje = {
@@ -520,13 +727,54 @@ class PedidoService_Gets:
             }
 
             # Notificar tanto a meseros como a cocineros
-            await manager.broadcast_to_group(mensaje, "meseros")
+            if tipo_pedido == 'Local':
+                await manager.broadcast_to_group(mensaje, "meseros")
+            if tipo_pedido == 'Entrega':
+                await manager.broadcast_to_group(mensaje, "repartidor")
+
             await manager.broadcast_to_group(mensaje, "cocineros")
             print(f"✅ Notificación de cancelación enviada: {id_pedido}")
 
         except Exception as e:
             print(f"❌ Error al enviar notificación de cancelación: {e}")
 
+    async def _asignar_pedido_automaticamente(self, id_pedido: str):
+        """
+        Se ejecuta automáticamente cuando un pedido de entrega está listo.
+        Usa IA (Gemini) para asignar al mejor repartidor.
+        """
+        try:
+            import logging
+            logger = logging.getLogger(__name__)
+
+            repartidor_service = RepartidorService(self.db)
+            resultado = await repartidor_service.asignar_pedido_con_ia(id_pedido)
+
+            logger.info(f"✅ Pedido {id_pedido} asignado automáticamente")
+            logger.info(f"   Repartidor: {resultado['id_repartidor']}")
+            logger.info(f"   Razón: {resultado['razon_asignacion']}")
+
+            # Notificar a cajeros/administradores sobre la asignación
+            mensaje = {
+                "tipo": "pedido_asignado_repartidor",
+                "id_pedido": id_pedido,
+                "id_repartidor": resultado['id_repartidor'],
+                "razon": resultado['razon_asignacion'],
+                "prioridad": resultado.get('prioridad', 'media'),
+                "timestamp": datetime.now().isoformat()
+            }
+
+            # Notificar a admin y meseros
+            await manager.broadcast_to_group(mensaje, "repartidor")
+#            await manager.broadcast_to_group(mensaje, "meseros")
+
+            logger.info("📡 Notificaciones de asignación enviadas")
+
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Error al asignar pedido automáticamente: {e}")
+            #
 
     """
     ###########################################################################################################

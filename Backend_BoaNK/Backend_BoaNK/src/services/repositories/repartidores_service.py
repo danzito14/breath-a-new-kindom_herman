@@ -1,7 +1,6 @@
 import uuid
 
 from fastapi import Depends, HTTPException
-from spyne import Integer
 from sqlalchemy.orm import Session
 from sqlalchemy import insert, select, update, and_, true
 

@@ -17,6 +17,7 @@ class Pedido_Schema(BaseModel):
     monto_pagado: Optional[float] = None
     forma_pago: Optional[str] = None
     fecha_pago: Optional[datetime] = None
+    id_repartidor: Optional[str] =None
 
 class Detalle_Pedido_Schema(BaseModel):
     id_detalle: str

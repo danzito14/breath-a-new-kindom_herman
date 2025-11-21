@@ -21,6 +21,17 @@ def enviar_recibo(db: Session = Depends(get_db)):
     return  service.get_pedidos_absolute()
 
 
+@pedido_gets.get("/gets_pedidos_repartidor", summary="Enviar pedidos")
+def enviar_recibo(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    service = PedidoService_Gets(db)
+    id_ususario = current_user
+    return  service.get_pedidos_repartidor(id_ususario)
+
+@pedido_gets.get("/gets_pedidos_by_id_for_repartidor/{id_pedido}", summary="Enviar pedidos")
+def enviar_recibo(id_pedido:str, db: Session = Depends(get_db)):
+    service = PedidoService_Gets(db)
+    return  service.get_pedidos_by_id_for_repartidor(id_pedido)
+
 @pedido_gets.get("/get_lista_platillo_by_id", summary="Para buscar por id")
 def get_lista_by_id(id_detalle:str, db: Session = Depends(get_db)):
     service = PedidoService_Gets(db)

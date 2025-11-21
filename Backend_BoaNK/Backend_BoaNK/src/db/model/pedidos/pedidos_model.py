@@ -13,7 +13,8 @@ pedido = Table("pedido", meta_data,
                Column("id_direccion", CHAR(36), nullable=False),
                 Column("monto_pagado", DECIMAL(10,2), nullable=True),
                 Column("forma_pago", CHAR(30), nullable=True),
-                Column("fecha_pago", DATETIME, nullable=True)
+                Column("fecha_pago", DATETIME, nullable=True),
+               Column("id_repartidor", CHAR(36), nullable=True)
                )
 
 detalle_pedido = Table("detalle_pedido", meta_data,
