@@ -197,6 +197,7 @@ class PedidoService_Gets:
                 pedido.c.Fecha,
                 pedido.c.Tipo_pedido,
                 pedido.c.total,
+                pedido.c.forma_pago,
                 pedido.c.id_direccion,
                 detalle_pedido.c.id_detalle,
                 detalle_pedido.c.estado.label("estado_detalle"),
@@ -239,8 +240,80 @@ class PedidoService_Gets:
                     "estado_lista": r.estado_lista,
                     "fecha_asignado": r.fecha_asignado,
                     "tipo_pedido": r.Tipo_pedido,
+                    "forma_pago": r.forma_pago,
                     "id_usuario": r.id_usuario,
                     "nombre_completo": r.nombre_completo,
+                    "total": r.total,
+                    "id_direccion": r.id_direccion,
+                    "direccion_completa": r.direccion_completa,
+                    "platillos": []
+                }
+
+            pedidos_dict[id_pedido]["platillos"].append({
+                "id_detalle": r.id_detalle,
+                "nombre_platillo": r.Nombre_platillo,
+                "estado_detalle": r.estado_detalle,
+                "detalles_adicionales": r.detalles_adicionales
+            })
+
+        return list(pedidos_dict.values())
+
+    def get_pedidos_usuario(self, id_usuario: str):
+        """
+        Obtiene todos los pedidos realizados por un usuario normal
+        (NO repartidor), incluyendo sus platillos y dirección.
+        """
+
+        direccion_label = func.concat(
+            direcciones_usuario.c.Calle, " ",
+            direcciones_usuario.c.No_ext, ", ",
+            direcciones_usuario.c.No_int, ", ",
+            direcciones_usuario.c.Colonia, ", ",
+            direcciones_usuario.c.Ciudad, ", ",
+            direcciones_usuario.c.Estado, ", CP ",
+            direcciones_usuario.c.CP, " ",
+            direcciones_usuario.c.instrucciones_add
+        ).label("direccion_completa")
+
+        query = (
+            select(
+                pedido.c.id_pedido,
+                pedido.c.Fecha,
+                pedido.c.Estado.label("estado_pedido"),
+                pedido.c.Tipo_pedido,
+                pedido.c.total,
+                pedido.c.forma_pago,
+                pedido.c.id_direccion,
+                detalle_pedido.c.id_detalle,
+                detalle_pedido.c.estado.label("estado_detalle"),
+                detalle_pedido.c.detalles_adicionales,
+                platillo.c.Nombre_platillo,
+                direccion_label
+            )
+            .join(detalle_pedido, detalle_pedido.c.id_pedido == pedido.c.id_pedido)
+            .join(platillo, platillo.c.id_platillo == detalle_pedido.c.id_platillo)
+            .join(direcciones_usuario, direcciones_usuario.c.id_direccion == pedido.c.id_direccion)
+            .where(
+                pedido.c.id_usuario == id_usuario
+            )
+            .order_by(desc(pedido.c.Fecha))
+        )
+
+        rows = self.db.execute(query).all()
+
+        # Agrupar por pedido
+        pedidos_dict = {}
+
+        for r in rows:
+            id_pedido = r.id_pedido
+
+            if id_pedido not in pedidos_dict:
+                pedidos_dict[id_pedido] = {
+                    "id_pedido": r.id_pedido,
+                    "fecha": r.Fecha,
+                    "estado_pedido": r.estado_pedido,
+                    "tipo_pedido": r.Tipo_pedido,
+                    "forma_pago": r.forma_pago,
                     "total": r.total,
                     "id_direccion": r.id_direccion,
                     "direccion_completa": r.direccion_completa,
@@ -316,7 +389,7 @@ class PedidoService_Gets:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=f"Error al cancelar platillo: {e}")
 
-    def cancelar_pedido(self, id_pedido: str, id_mesa: str):
+    def cancelar_pedido(self, id_pedido: str, id_mesa: str, id_repartidor: Optional[str]):
         try:
             # Obtener id_usuario del pedido
             result = self.db.execute(
@@ -337,6 +410,8 @@ class PedidoService_Gets:
 
             ID_USUARIO_GENERICO = '00000000-0000-0000-0000-000000000001'
             ID_DIRECCION_GENERICA = '00000000-0000-0000-0000-00000000000A'
+
+
             # Si es temporal (nivel 8)
             if nivel_usuario == 8:
 
@@ -392,6 +467,10 @@ class PedidoService_Gets:
                 select(pedido.c.Tipo_pedido)
                 .where(pedido.c.id_pedido == id_pedido)
             ).scalar()
+
+            if tipo_pedido == 'Entrega':
+                serviceRepartidores = RepartidorService(self.db)
+                serviceRepartidores.finalizar_pedido(id_pedido, id_repartidor)
 
             self.db.commit()
 

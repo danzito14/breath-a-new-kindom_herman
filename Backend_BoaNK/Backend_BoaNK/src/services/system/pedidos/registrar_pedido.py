@@ -110,7 +110,8 @@ class RegistrarPedido_Service:
                     else 'Entrega' if temporal_dict.get("id_direccion")
                     else None
                 ),
-                total=temporal_dict.get("precio", 0)
+                total=temporal_dict.get("precio", 0),
+                forma_pago=temporal_dict.get("metodo_pago")
             )
 
             id_mesa = temporal_dict.get("id_mesa")

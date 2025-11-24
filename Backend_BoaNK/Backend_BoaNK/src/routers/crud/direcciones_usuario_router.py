@@ -35,7 +35,7 @@ def update_direccion(id_direccion:str,  data: dict, db:Session = Depends(get_db)
     service = Direcciones_usuarioService(db)
     return service.update_direccion_usuario(id_direccion, data)
 
-@direcciones.delete("/direcciones/delete_direccion/{id_direccion}", summary="Eliminar un platillo de direcciones")
-def delete_direcciones(id_direccion: str, db: Session = Depends(get_db)):
+@direcciones.delete("/direcciones/delete_direccion", summary="Eliminar un platillo de direcciones")
+def delete_direcciones(id_direccion: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     service = Direcciones_usuarioService(db)
     return service.delete_direcciones_usuario(id_direccion)

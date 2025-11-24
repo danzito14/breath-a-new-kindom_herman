@@ -12,7 +12,7 @@ from src.services.system.pedidos.pago_service import Pago_Service
 class pago_datos(BaseModel):
     id_pedido: str
     metodo_pago: str
-    id_mesa: str
+    id_mesa: Optional[str] = None
     referencia_pago: Optional[str] = None
 
 pago_router = APIRouter(prefix="/pagar", tags=["Pagos"])

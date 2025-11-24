@@ -29,7 +29,7 @@ def get_tarjetas_by_usuario (id_usuario: str, titular: str, db: Session = Depend
     return service.get_tarjeta_pago_by_titular(id_usuario, titular)
 
 @tarjetas.delete("/tarjetas/delete_tarjeta")
-def delete_tarjeta (id_tarjeta: str, db: Session = Depends(get_db)):
+def delete_tarjeta (id_tarjeta: str, current_user:str = Depends(get_current_user), db: Session = Depends(get_db)):
     service = Tarjetas_PagoService(db)
     return  service.delete_tarjeta(id_tarjeta)
 

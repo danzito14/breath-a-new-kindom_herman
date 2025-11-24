@@ -20,6 +20,12 @@ def enviar_recibo(db: Session = Depends(get_db)):
     service = PedidoService_Gets(db)
     return  service.get_pedidos_absolute()
 
+@pedido_gets.get("/gets_pedido_usuario", summary="Enviar pedidos")
+def enviar_recibo(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    service = PedidoService_Gets(db)
+    id_ususario = current_user
+    return  service.get_pedidos_usuario(id_ususario)
+
 
 @pedido_gets.get("/gets_pedidos_repartidor", summary="Enviar pedidos")
 def enviar_recibo(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -43,9 +49,10 @@ def cancelar_platillo(id_detalle: str, id_pedido: str, background_tasks: Backgro
     return  service.cancelar_platillo(id_detalle, id_pedido, id_mesa)
 
 @pedido_gets.delete("/cancelar_pedido", summary="Cancela un platillo, si es el unico o el ultimo que faltaba en cancelar ccancela el pedido")
-def cancelar_platillo(id_pedido: str,  background_tasks: BackgroundTasks, id_mesa: Optional[str] = None, db: Session = Depends(get_db)):
+def cancelar_platillo(id_pedido: str,  background_tasks: BackgroundTasks, id_mesa: Optional[str] = None,current_user: Optional[str] = Depends(get_current_user), db: Session = Depends(get_db)):
     service = PedidoService_Gets(db, background_tasks)
-    return  service.cancelar_pedido(id_pedido, id_mesa)
+    id_usuario = current_user
+    return  service.cancelar_pedido(id_pedido, id_mesa, id_usuario)
 
 @pedido_gets.get("/lista_pendiente", summary="Lista de platillos pendientes  a cocinar para cocineros")
 def lista_platillos_pendientes(db: Session = Depends(get_db)):

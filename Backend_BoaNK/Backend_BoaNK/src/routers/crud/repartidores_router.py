@@ -62,18 +62,15 @@ async def asignar_pedido_con_ia(
     service = RepartidorService(db)
     return await service.asignar_pedido_con_ia(request.id_pedido)
 
-
+""""
 @repartidor_router.put("/marcar-entregado", summary="Marcar pedido como entregado")
 def marcar_pedido_entregado(
         request: MarcarEntregadoRequest,
         db: Session = Depends(get_db),
         user_id: str = Depends(get_current_user),
         nvl_usuario: str = Depends(get_user_level)
-):
-    """
-    Marca un pedido como entregado y actualiza el estado del repartidor.
+):Marca un pedido como entregado y actualiza el estado del repartidor.
     Acceso: Admin (6), Cajero (4), Mesero (2), Cliente(1), Repartidor(5)
-    """
     # Validar permisos
     if int(nvl_usuario) not in [1, 2, 4, 6 ]:
         # Si no es admin/cajero, verificar que sea el repartidor del pedido
@@ -83,6 +80,7 @@ def marcar_pedido_entregado(
     service = RepartidorService(db)
     return service.marcar_pedido_entregado(request.id_pedido, request.id_repartidor)
 
+    """
 
 @repartidor_router.get("/{id_repartidor}/pedidos", summary="Obtener pedidos de un repartidor")
 def obtener_pedidos_repartidor(

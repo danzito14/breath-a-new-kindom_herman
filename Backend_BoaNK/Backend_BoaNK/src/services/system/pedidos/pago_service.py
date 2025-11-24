@@ -9,6 +9,8 @@ from src.db.model.mesa_model import mesa
 from src.db.model.pedidos.pago_model import pago
 from src.db.model.pedidos.pedidos_model import pedido, detalle_pedido
 
+from src.services.system.repartidores.repartidores_service import RepartidorService
+
 
 class Pago_Service:
     def __init__(self, db: Session = Depends(get_db)):
@@ -73,6 +75,8 @@ class Pago_Service:
             )
         )
 
+        self.verificar_si_es_entrega_y_actuar(id_pedido, id_usuario)
+
         # 6️⃣ Confirmar transacción
         self.db.commit()
 
@@ -86,7 +90,7 @@ class Pago_Service:
         """
         Devuelve True si todos los platillos del pedido están 'Servido' o 'Cancelado'.
         """
-        estados_no_finales = {'pendiente', 'cocinando', 'listo'}  # ajusta a tus valores reales
+        estados_no_finales = {'pendiente', 'cocinando'}  # ajusta a tus valores reales
 
         query = select(func.count()).select_from(detalle_pedido).where(
             detalle_pedido.c.id_pedido == id_pedido,
@@ -102,3 +106,23 @@ class Pago_Service:
             select(pedido.c.total).where(pedido.c.id_pedido == id_pedido)
         ).scalar()
         return  total_pagar
+
+    def verificar_si_es_entrega_y_actuar(self, id_pedido: str, id_usuario: str):
+        # 1️⃣ ¿Es pedido de entrega?
+        tipo = self.db.execute(
+            select(pedido.c.Tipo_pedido).where(pedido.c.id_pedido == id_pedido)
+        ).scalar()
+
+        if tipo != "Entrega":
+            return
+
+        # 2️⃣ Marcar todos los platillos como servidos
+        self.db.execute(
+            update(detalle_pedido)
+            .where(detalle_pedido.c.id_pedido == id_pedido)
+            .values(estado="servido")
+        )
+
+        # 3️⃣ Quitar el pedido del repartidor
+        serviceRepartidores = RepartidorService(self.db)
+        serviceRepartidores.finalizar_pedido(id_pedido, id_usuario)

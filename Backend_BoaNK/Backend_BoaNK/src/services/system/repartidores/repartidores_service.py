@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from fastapi import Depends, HTTPException
-from sqlalchemy import select, update, and_, func
+from sqlalchemy import select, update, and_, func, delete
 from sqlalchemy.orm import Session
 import google.generativeai as genai
 
@@ -444,44 +444,18 @@ NO incluyas ningún texto adicional fuera del JSON."""
         except Exception as e:
             logger.error(f"❌ Error al notificar admin: {e}")
 
-    def marcar_pedido_entregado(self, id_pedido: str, id_usuario: str) -> Dict[str, Any]:
-        """Marca un pedido como entregado y actualiza el estado del repartidor"""
+    def finalizar_pedido(self, id_pedido: str, id_usuario: str):
+        """Ya sea cancelado o pagado lo eliminamos de la tabla lista_repartidores y le restamos uno al repartidor"""
         try:
-            # Obtener id_repartidor desde el pedido
-            pedido_query = select(
-                pedido.c.id_repartidor
-            ).where(pedido.c.id_pedido == id_pedido)
-
-            result = self.db.execute(pedido_query).first()
-
-            if not result:
-                raise HTTPException(status_code=404, detail="Pedido no encontrado")
-
-            id_repartidor = result.id_repartidor
-
-            # Actualizar pedido
-            self.db.execute(
-                update(pedido)
-                .where(pedido.c.id_pedido == id_pedido)
-                .values(Estado="Entregado")
-            )
-
             # Actualizar lista_repartidores
             self.db.execute(
-                update(lista_repartidores)
-                .where(
-                    and_(
-                        lista_repartidores.c.id_pedido == id_pedido,
-                        lista_repartidores.c.id_usuario == id_usuario
-                    )
-                )
-                .values(estado_pedido="entregado")
+                delete(lista_repartidores).where(lista_repartidores.c.id_pedido == id_pedido)
             )
 
             # Reducir contador del repartidor
             self.db.execute(
                 update(repartidores)
-                .where(repartidores.c.id_repartidor == id_repartidor)
+                .where(repartidores.c.id_usuario == id_usuario)
                 .values(
                     pedidos_asignados=repartidores.c.pedidos_asignados - 1
                 )
@@ -490,13 +464,13 @@ NO incluyas ningún texto adicional fuera del JSON."""
             # Si ya no tiene pedidos, cambiar estado
             repartidor = self.db.execute(
                 select(repartidores.c.pedidos_asignados)
-                .where(repartidores.c.id_repartidor == id_repartidor)
+                .where(repartidores.c.id_usuario == id_usuario)
             ).first()
 
             if repartidor and repartidor.pedidos_asignados <= 0:
                 self.db.execute(
                     update(repartidores)
-                    .where(repartidores.c.id_repartidor == id_repartidor)
+                    .where(repartidores.c.id_usuario == id_usuario)
                     .values(
                         en_ruta=False,
                         estado="En local",
@@ -506,11 +480,11 @@ NO incluyas ningún texto adicional fuera del JSON."""
 
             self.db.commit()
 
-            logger.info(f"✅ Pedido {id_pedido} marcado como entregado por usuario {id_usuario}")
+            logger.info(f"✅ Pedido {id_pedido} se a cancelado o entregado satisfactoriamente {id_usuario}")
 
             return {
                 "success": True,
-                "message": "Pedido marcado como entregado",
+                "message": "Pedido finalizado correctamente",
                 "id_pedido": id_pedido
             }
 

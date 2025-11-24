@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.staticfiles import StaticFiles
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -39,11 +40,16 @@ load_dotenv()
 
 app = FastAPI()
 
+
+# Servir carpeta /public
+app.mount("/public", StaticFiles(directory="public"), name="public")
+
 # Primero CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],  # ambos por seguridad
-    allow_credentials=True,
+    #allow_origins=["http://localhost:4200", "http://127.0.0.1:4200", '*'],  # ambos por seguridad
+    allow_origins=['*'],  # ambos por seguridad
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
