@@ -17,3 +17,15 @@ __pycache__/
 .vscode/
 .idea/
 .DS_Store
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+.virtualenv/
+
+# Python
+*.py[cod]
+*$py.class
+*.so
+.Python
