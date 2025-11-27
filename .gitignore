@@ -1,0 +1,19 @@
+# Archivos de entorno
+.env
+*.env
+
+# Carpetas virtual env
+venv/
+.venv/
+
+# Archivos de Python
+__pycache__/
+*.pyc
+
+# Archivos de logs
+*.log
+
+# IDE basura
+.vscode/
+.idea/
+.DS_Store
