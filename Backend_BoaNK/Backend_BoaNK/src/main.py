@@ -1,7 +1,11 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
-
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
+
+# ✅ Cargar el archivo .env
+load_dotenv()
 
 from src.routers.crud.usuario_router import user
 from src.routers.crud.platillo_router import platillos
@@ -23,10 +27,6 @@ from src.routers.crud.oferta_router import ofertas
 from src.routers.crud.mesa_router import mesas
 from src.routers.crud.carrito_router import carrito
 from src.services.system.reportes.reportes_ventas import reportes
-
-from dotenv import load_dotenv
-import os
-
 from src.routers.sys.pedidos.pago_router import pago_router
 from src.routers.sys.pedidos.pedido_gets_router import pedido_gets
 from src.routers.sys.pedidos.pedidos_temporal_router import temporal
@@ -35,8 +35,6 @@ from src.routers.sys.websocket_router import websocket_router
 from src.utils.cp_router import utils
 from src.utils.utils_empleados import untils_empleados
 
-# ✅ Cargar el archivo .env
-load_dotenv()
 
 
 app = FastAPI()
