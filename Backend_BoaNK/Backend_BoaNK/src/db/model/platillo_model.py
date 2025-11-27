@@ -17,9 +17,10 @@ platillo = Table("platillo", meta_data,
                        Column("tiempo_preparacion", Integer, nullable=False),
 
                         #Columnas para el front para poner oferta o no
-                        En_oferta=Column(Boolean),
-                        Porcentaje_oferta= Column(String),
-                        precio_original=Column(String)
+                        #Comentadas por si las dudas
+                        #En_oferta=Column(Boolean),
+                        #Porcentaje_oferta= Column(String),
+                        #precio_original=Column(String)
                  )
 
 opcion_platillo = Table("opcion_platillo", meta_data,
