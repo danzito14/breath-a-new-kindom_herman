@@ -22,6 +22,7 @@ from src.routers.crud.repartidores_router import repartidor_router
 from src.routers.crud.oferta_router import ofertas
 from src.routers.crud.mesa_router import mesas
 from src.routers.crud.carrito_router import carrito
+from src.services.system.reportes.reportes_ventas import reportes
 
 from dotenv import load_dotenv
 import os
@@ -81,4 +82,5 @@ app.include_router(pedido_gets)
 app.include_router(pago_router)
 app.include_router(websocket_router)
 app.include_router(repartidor_router)
+app.include_router(reportes)
 

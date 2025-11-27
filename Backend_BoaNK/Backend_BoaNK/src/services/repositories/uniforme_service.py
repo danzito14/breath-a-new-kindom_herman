@@ -44,19 +44,20 @@ class UniformeService:
         except Exception as e:
             raise  HTTPException(status_code=400, detail=str(e))
 
-    def get_uniforme(self, Descripcion:str):
+    def get_uniforme(self, id_uniforme: int):
         try:
-            stmt = select(uniforme).where(uniforme.c.Descripcion.ilike(f"%{Descripcion}%"))
-            uniforme_ = self.db.execute(stmt).all()
+            stmt = select(uniforme).where(uniforme.c.id_uniforme == id_uniforme)
+            result = self.db.execute(stmt).first()
 
-            if not uniforme_:
-              raise HTTPException(status_code=400, detail="Uniforme no encontrado")
-            return [dict(row._mapping) for row in uniforme_]
+            if not result:
+                raise HTTPException(status_code=400, detail="Uniforme no encontrado")
+
+            return dict(result._mapping)
 
         except Exception as e:
-            raise  HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
 
-    def update_uniforme (self, id_uniforme:str, data:dict):
+    def update_uniforme (self, id_uniforme:int, data:dict):
         try:
 
             if "Talla" in data and "Descripcion" in data and "id_puesto" in data:

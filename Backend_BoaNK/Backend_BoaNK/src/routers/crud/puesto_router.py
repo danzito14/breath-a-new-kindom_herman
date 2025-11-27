@@ -22,9 +22,9 @@ def get_all_puestos(db: Session = Depends(get_db)):
     return service.get_all_puestos()
 
 @puestos.get("/puestos/get_puesto")
-def get_puesto(Nombre_puesto: str, db: Session = Depends(get_db)):
+def get_puesto(id_puesto: int, db: Session = Depends(get_db)):
     service = PuestoService(db)
-    return service.get_puesto(Nombre_puesto)
+    return service.get_puesto(id_puesto)
 
 @puestos.put("/puestos/update_puesto/{id_puesto}")
 def update_puesto(id_puesto: int, data: dict = Body(...), db: Session = Depends(get_db)):

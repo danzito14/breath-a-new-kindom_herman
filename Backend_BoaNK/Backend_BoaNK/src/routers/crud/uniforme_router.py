@@ -22,12 +22,12 @@ def get_all_uniforme(db: Session = Depends(get_db)):
     service = UniformeService(db)
     return  service.get_all_uniforme()
 
-@uniformes.get("/uniforme/get_uniforme/{Descripcion}")
-def get_all_uniforme(Descripcion:str, db: Session = Depends(get_db)):
+@uniformes.get("/uniforme/get_uniforme/{id}")
+def get_all_uniforme(id:int, db: Session = Depends(get_db)):
     service = UniformeService(db)
-    return service.get_uniforme(Descripcion)
+    return service.get_uniforme(id)
 
 @uniformes.put("/uniforme/update_uniforme/{id_uniforme}")
-def update_uniforme(id_uniforme: str, data: dict,db: Session = Depends(get_db)):
+def update_uniforme(id_uniforme: int, data: dict,db: Session = Depends(get_db)):
     service = UniformeService(db)
     return  service.update_uniforme(id_uniforme, data)

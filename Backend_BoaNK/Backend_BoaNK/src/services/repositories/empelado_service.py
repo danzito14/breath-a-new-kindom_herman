@@ -78,7 +78,7 @@ class EmpleadoService:
 
         except Exception as e:
             self.db.rollback()
-            raise HTTPException(status_code=400, detail=f"{str(e)} giragira anatarite")
+            raise HTTPException(status_code=400, detail=f"{str(e)}")
 
     def obtener_nvl_usuario(self, id_puesto):
         nlv_usuario = self.db.execute(
