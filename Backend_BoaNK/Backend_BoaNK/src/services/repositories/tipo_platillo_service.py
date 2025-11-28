@@ -13,20 +13,42 @@ class Tipo_platillosService:
     def create_tipo_platillo(self, data_tipo_platillo: Tipo_platilloSchema):
         tipo_platillo_dict = data_tipo_platillo.dict(exclude_unset=True)
 
-        existe = self.db.execute(
-            select(tipo_platillo).where(tipo_platillo.c.descripcion == tipo_platillo_dict["descripcion"])
-        ).first()
-        if existe:
-            raise HTTPException(status_code=400, detail=f"{tipo_platillo_dict['descripcion']} ya existe")
+        descripcion = tipo_platillo_dict.get("descripcion")
+        if not descripcion:
+            raise HTTPException(
+                status_code=422,
+                detail="La descripción del tipo de platillo es obligatoria"
+            )
 
+        # Verificar duplicado
+        existe = self.db.execute(
+            select(tipo_platillo).where(tipo_platillo.c.descripcion == descripcion)
+        ).first()
+
+        if existe:
+            raise HTTPException(status_code=400, detail=f"El tipo {descripcion} ya existe")
+
+        # Crear insert compatible con MySQL
         stmt = insert(tipo_platillo).values(**tipo_platillo_dict)
+
         try:
-            self.db.execute(stmt)
+            result = self.db.execute(stmt)
             self.db.commit()
-            return {"message": "Tipo platillo agregado correctamente"}
+
+            # OBTENER ID INSERTADO EN MYSQL
+            id_tipo = result.lastrowid
+
+            return {
+                "message": "Tipo de platillo agregado correctamente",
+                "id_tipo_platillo": id_tipo
+            }
+
         except Exception as e:
             self.db.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al crear tipo de platillo: {str(e)}"
+            )
 
     def get_all_tipo_platillo(self):
         try:

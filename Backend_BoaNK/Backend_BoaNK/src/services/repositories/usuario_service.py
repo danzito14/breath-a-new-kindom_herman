@@ -118,7 +118,7 @@ class UsuarioService:
                                 <p>Tu código de activación es: <b>{codigo_activacion}</b></p>
                                 <p>El código expirará en 10 minutos.</p>
 
-                                <a class="iniciar-sesion" href="http://localhost:8000/cuenta/activar_cuenta?correo={user_dict["Correo_electronico"]}&codigo={codigo_activacion}">
+                                <a class="iniciar-sesion" href="https://breath-a-new-kindomherman-production.up.railway.app/cuenta/activar_cuenta?correo={user_dict["Correo_electronico"]}&codigo={codigo_activacion}">
                                     Activar cuenta
                                 </a>
                             </body>
