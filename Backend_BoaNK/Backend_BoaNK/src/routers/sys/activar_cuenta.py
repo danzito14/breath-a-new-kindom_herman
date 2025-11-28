@@ -28,6 +28,6 @@ def activar_cuenta_por_link(correo: str, codigo: str, db: Session = Depends(get_
     resultado = service_cuenta.activar_cuenta(correo, codigo)
 
     if resultado["exito"]:
-        return RedirectResponse(url="http://localhost:4200/login")
+        return RedirectResponse(url="https://breath-a-new-kindomherman-production.up.railway.app/login")
     else:
-        return RedirectResponse(url="http://localhost:4200/auth-error")
+        return RedirectResponse(url="https://breath-a-new-kindomherman-production.up.railway.app/auth-error")

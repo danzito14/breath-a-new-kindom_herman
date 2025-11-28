@@ -26,11 +26,12 @@ from src.schemas.direcciones_usuario_schema import Direcciones_usuarioSchema
 # 🔥 IMPORTAR EL GESTOR DE WEBSOCKET
 from src.core.websocket_manager import manager
 
+from decimal import Decimal
 
 class Producto(BaseModel):
     cant: int
     nombre: str
-    subtotal: int
+    subtotal: Decimal
 
 
 class CorreoResumen(BaseModel):
