@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, BackgroundTasks, Form
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, select
 from fastapi import File, UploadFile
 import os
 import uuid
@@ -80,20 +80,46 @@ def update_user(nickname: str, data_user: UserSchema = Body(...), db: Session = 
 
 
 @user.put("/user/update_user_by_id")
-def update_user(current_user:str = Depends(get_current_user), data_user: UserSchema = Body(...), db: Session = Depends(get_db)):
-     # Buscar el usuario existente
+def update_user(
+    current_user: str = Depends(get_current_user),
+    data_user: UserSchema = Body(...),
+    db: Session = Depends(get_db)
+):
+
+    update_data = data_user.dict(exclude_unset=True)
+
     existing_user = db.query(usuarios).filter(usuarios.c.id_usuario == current_user).first()
     if not existing_user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-        # Crear diccionario de datos a actualizar (excluyendo los campos vacíos)
-    update_data = data_user.dict(exclude_unset=True)
+    # Validar nickname
+    if "Nickname" in update_data:
+        existe_nick = db.execute(
+            select(usuarios).where(
+                usuarios.c.Nickname == update_data["Nickname"],
+                usuarios.c.id_usuario != current_user
+            )
+        ).first()
 
-        # Si se está actualizando la contraseña, hay que hashearla
+        if existe_nick:
+            raise HTTPException(status_code=400, detail="Nickname ya existente, elige otro")
+
+    # Validar correo
+    if "Correo_electronico" in update_data:
+        existe_correo = db.execute(
+            select(usuarios).where(
+                usuarios.c.Correo_electronico == update_data["Correo_electronico"],
+                usuarios.c.id_usuario != current_user
+            )
+        ).first()
+
+        if existe_correo:
+            raise HTTPException(status_code=400, detail="El correo pertenece a otra cuenta")
+
+    # Hash de contraseña
     if "Contraseña" in update_data:
         update_data["Contraseña"] = pwd_context.hash(update_data["Contraseña"])
 
-        # Actualizar el usuario
     try:
         db.query(usuarios).filter(usuarios.c.id_usuario == current_user).update(update_data)
         db.commit()
