@@ -90,7 +90,7 @@ class EmpleadoService:
     def generar_nickname(self, nombre, apellido, id_puesto):
         iniciales = nombre[0].upper() + apellido[0].upper()
         apellido_capitalizado = apellido.capitalize()
-        return f"{iniciales}{apellido_capitalizado}{id_puesto}"
+        return f"{iniciales}{apellido_capitalizado}{id_puesto}{uuid.uuid4().hex[:4]}"
 
     def crear_contraseña(self, length=8):
         caracteres = string.ascii_lowercase + string.digits

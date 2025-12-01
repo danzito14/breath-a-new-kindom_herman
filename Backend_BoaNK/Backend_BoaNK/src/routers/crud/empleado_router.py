@@ -2,6 +2,7 @@ import os
 import uuid
 from pathlib import Path
 
+from src.db.model.usuario_model import usuarios
 from src.schemas.empleados_schema import EmpleadosSchema
 from src.db.model.empleado_model import empleado
 from src.core.db_credentials import get_db
@@ -69,6 +70,20 @@ def update_empleado(id_empleado: str, data_emp: EmpleadosSchema, db: Session = D
     ).scalar()
     print("Puesto anterior:", id_puesto_ant)
 
+    id_usuario = db.execute(
+        select(empleado.c.id_usuario).where(empleado.c.id_empleado == id_empleado)
+    ).scalar()
+
+    if "estatus" in data:
+        # actualizamos el estatus de la cuenta del empleado
+
+        stmt_usu = (
+            update(usuarios)
+            .where(usuarios.c.id_usuario == id_usuario)
+            .values(estatus=data["estatus"])
+        )
+        db.execute(stmt_usu)
+
     # --- Actualizar datos del empleado ---
     stmt = (
         update(empleado)
@@ -93,9 +108,6 @@ def update_empleado(id_empleado: str, data_emp: EmpleadosSchema, db: Session = D
         )).where(empleado.c.id_empleado == id_empleado)
     ).scalar()
 
-    id_usuario = db.execute(
-        select(empleado.c.id_usuario).where(empleado.c.id_empleado == id_empleado)
-    ).scalar()
 
     if not nombre_result or nombre_result.strip() == "":
         nombre_result = None

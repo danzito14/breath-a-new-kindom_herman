@@ -28,7 +28,7 @@ class OfertasService:
         try:
             self.db.execute(stmt)
             self.db.commit()
-            return {"message": "Oferta agregado a favoritos"}
+            return {"message": "Oferta agregado a favoritos", "id_oferta": oferta_dict["id_oferta"]}
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))

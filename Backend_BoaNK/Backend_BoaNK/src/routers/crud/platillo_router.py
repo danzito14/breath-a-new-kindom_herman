@@ -380,6 +380,7 @@ def get_platillo_by_id(id: str, db: Session = Depends(get_db)):
             platillo.c.Ruta_imagen,
             platillo.c.precio_venta,
             platillo.c.Descripcion,
+            platillo.c.estatus,
             tipo_platillo.c.descripcion,
             tipo_platillo.c.color
         )
