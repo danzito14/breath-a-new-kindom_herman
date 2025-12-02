@@ -3,6 +3,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
+from passlib.context import CryptContext
 
 from sqlalchemy import text, select, and_, update
 from sqlalchemy.orm import Session
@@ -17,6 +18,11 @@ from pydantic import BaseModel
 from src.db.model.cocineros_model import cocina
 from src.db.model.pedidos.pedidos_model import pedido, detalle_pedido
 from src.db.model.pedidos.repartidores_model import repartidores
+from src.db.model.usuario_model import usuarios
+
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class CorreoRequerido(BaseModel):
@@ -81,10 +87,10 @@ def generar_codigo(
         # Insertar nuevo código
         db.execute(
             text("""
-                INSERT INTO codigo_validacion (id_usuario, codigo, correo_electronico)
-                VALUES (:id, :codigo, :correo)
+                INSERT INTO codigo_validacion (id_usuario, codigo)
+                VALUES (:id, :codigo)
             """),
-            {"id": current_user, "codigo": codigo_num, "correo": correo}
+            {"id": current_user, "codigo": codigo_num}
         )
 
         db.commit()
@@ -104,6 +110,9 @@ def generar_codigo(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+
+
+
 
 
 @untils_empleados.put("/cambio_correo", summary="Solicitar cambio de correo electrónico")
@@ -352,3 +361,247 @@ def logout_cocinero(current_user: str = Depends(get_current_user), db: Session =
         return True
 
     return False
+
+@untils_empleados.get("/recuperar_contra")
+def recuperar_contra(nickname:str, db:Session = Depends(get_db)):
+    #Vemos si existe un correo para ese usuario
+
+    correo = db.execute(
+        select(usuarios.c.Correo_electronico).where(usuarios.c.Nickname == nickname)).scalar()
+
+    if not correo:
+        raise HTTPException(status_code=400, detail="No se ha encontrado ningun correo asociado a este nickname")
+    else:
+        return  {"correo": correo}
+
+
+# Agregar estos modelos Pydantic al inicio del archivo
+class CorreoCodigoRequerido(BaseModel):
+    correo: str
+    codigo: str
+
+
+class CambioContrasenaPublico(BaseModel):
+    correo: str
+    codigo: str
+    nueva_contrasena: str
+
+
+# ========== ENDPOINTS PÚBLICOS PARA RECUPERACIÓN DE CONTRASEÑA ==========
+
+@untils_empleados.put("/generar_codigo_publico", summary="Generar código para cambiar contraseña (PÚBLICO)")
+def generar_codigo_publico(
+        data: CorreoRequerido,
+        db: Session = Depends(get_db)
+):
+    """
+    Endpoint PÚBLICO (sin autenticación) para enviar código de recuperación.
+    Este endpoint NO requiere token de autenticación.
+    """
+    try:
+        correo = data.correo
+
+        # Buscar usuario por correo
+        usuario = db.execute(
+            select(usuarios.c.id_usuario).where(usuarios.c.Correo_electronico == correo)
+        ).scalar()
+
+        if not usuario:
+            raise HTTPException(status_code=404, detail="No existe un usuario con ese correo")
+
+        # Generar código de 4 dígitos de forma segura
+        codigo_num = secrets.randbelow(9000) + 1000
+
+        # Eliminar código anterior si existe
+        db.execute(
+            text("DELETE FROM codigo_validacion WHERE id_usuario = :id"),
+            {"id": usuario}
+        )
+
+        # Insertar nuevo código con timestamp
+        db.execute(
+            text("""
+                INSERT INTO codigo_validacion (id_usuario, codigo)
+                VALUES (:id, :codigo)
+            """),
+            {"id": usuario, "codigo": codigo_num}
+        )
+
+        db.commit()
+
+        # Enviar correo con diseño profesional
+        texto = f"Hola, tu código para recuperar tu contraseña es {codigo_num}"
+        html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #D0AF43; text-align: center;">Recuperación de Contraseña</h2>
+                <p>Hola,</p>
+                <p>Has solicitado recuperar tu contraseña. Tu código de verificación es:</p>
+                <div style="background-color: #f5f5f5; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0; border: 2px solid #D0AF43;">
+                    <h1 style="color: #773832; font-size: 48px; margin: 0; letter-spacing: 10px;">{codigo_num}</h1>
+                </div>
+                <p style="color: #666; font-size: 14px;">⏰ Este código expirará en 15 minutos.</p>
+                <p style="color: #666; font-size: 14px;">⚠️ Si no solicitaste este código, ignora este mensaje.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="color: #877129; text-align: center;">Saludos,<br><strong>Breath of a New Kingdom</strong></p>
+            </div>
+        </body>
+        </html>
+        """
+
+        EmailService().enviar_correo(
+            destinatario=correo,
+            asunto="Código de Recuperación de Contraseña",
+            texto=texto,
+            html=html
+        )
+
+        return {"message": "Código enviado correctamente", "success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@untils_empleados.post("/validar_codigo_publico", summary="Validar código de recuperación (PÚBLICO)")
+def validar_codigo_publico(
+        data: CorreoCodigoRequerido,
+        db: Session = Depends(get_db)
+):
+    """
+    Endpoint PÚBLICO (sin autenticación) para validar el código de 4 dígitos.
+    Verifica que el código sea correcto y no haya expirado (15 minutos).
+    """
+    try:
+        correo = data.correo
+        codigo = data.codigo
+
+        # Buscar usuario por correo
+        usuario = db.execute(
+            select(usuarios.c.id_usuario).where(usuarios.c.Correo_electronico == correo)
+        ).scalar()
+
+        if not usuario:
+            return {"valid": False, "message": "Usuario no encontrado"}
+
+        # Validar código (considera expiración de 15 minutos)
+        result = db.execute(
+            text("""
+                SELECT * FROM codigo_validacion
+                WHERE id_usuario = :id 
+                AND codigo = :codigo
+            """),
+            {"id": usuario, "codigo": codigo}
+        ).fetchone()
+
+        if not result:
+            return {"valid": False, "message": "Código incorrecto o expirado"}
+
+        # NO eliminamos el código aquí, lo haremos después de cambiar la contraseña
+        return {"valid": True, "message": "Código válido"}
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@untils_empleados.put("/cambiar_contrasena_publico", summary="Cambiar contraseña con código (PÚBLICO)")
+def cambiar_contrasena_publico(
+        data: CambioContrasenaPublico,
+        db: Session = Depends(get_db)
+):
+    """
+    Endpoint PÚBLICO (sin autenticación) para cambiar la contraseña usando el código.
+    Valida el código nuevamente por seguridad y hashea la nueva contraseña.
+    """
+    try:
+        correo = data.correo
+        codigo = data.codigo
+        nueva_contrasena = data.nueva_contrasena
+
+        # Validar que la contraseña tenga al menos 6 caracteres
+        if len(nueva_contrasena) < 6:
+            raise HTTPException(
+                status_code=400,
+                detail="La contraseña debe tener al menos 6 caracteres"
+            )
+
+        # Buscar usuario por correo
+        usuario = db.execute(
+            select(usuarios.c.id_usuario).where(usuarios.c.Correo_electronico == correo)
+        ).scalar()
+
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+        # Validar código nuevamente por seguridad
+        result = db.execute(
+            text("""
+                SELECT * FROM codigo_validacion
+                WHERE id_usuario = :id 
+                AND codigo = :codigo
+            """),
+            {"id": usuario, "codigo": codigo}
+        ).fetchone()
+
+        if not result:
+            raise HTTPException(
+                status_code=400,
+                detail="Código incorrecto o expirado"
+            )
+
+        # Hashear la nueva contraseña usando el mismo pwd_context que update_user
+        nueva_contrasena_hash = pwd_context.hash(nueva_contrasena)
+
+        # Actualizar contraseña con hash (MySQL usa backticks)
+        db.execute(
+            text("""
+                UPDATE usuarios
+                SET `Contraseña` = :contrasena
+                WHERE id_usuario = :id
+            """),
+            {"contrasena": nueva_contrasena_hash, "id": usuario}
+        )
+
+        # Eliminar el código usado (seguridad: código de un solo uso)
+        db.execute(
+            text("DELETE FROM codigo_validacion WHERE id_usuario = :id"),
+            {"id": usuario}
+        )
+
+        db.commit()
+
+        # Enviar correo de confirmación
+        html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #D0AF43; text-align: center;">✅ Contraseña Actualizada</h2>
+                <p>Tu contraseña ha sido cambiada exitosamente.</p>
+                <p style="color: #666;">Ya puedes iniciar sesión con tu nueva contraseña.</p>
+                <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #D0AF43; margin: 20px 0;">
+                    <p style="margin: 0; color: #856404;"><strong>⚠️ Importante:</strong> Si no realizaste este cambio, contacta inmediatamente con soporte.</p>
+                </div>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="color: #877129; text-align: center;">Saludos,<br><strong>Breath of a New Kingdom</strong></p>
+            </div>
+        </body>
+        </html>
+        """
+
+        EmailService().enviar_correo(
+            destinatario=correo,
+            asunto="Contraseña Actualizada - Breath of a New Kingdom",
+            texto="Tu contraseña ha sido cambiada exitosamente",
+            html=html
+        )
+
+        return {"message": "Contraseña actualizada correctamente", "success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
