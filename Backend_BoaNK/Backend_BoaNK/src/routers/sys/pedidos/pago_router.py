@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import  APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -18,9 +18,9 @@ class pago_datos(BaseModel):
 pago_router = APIRouter(prefix="/pagar", tags=["Pagos"])
 
 @pago_router.post("/pagar", summary="Pagar")
-def pagar_pedido(data: pago_datos, current_user: str = Depends(get_current_user),  db: Session = Depends(get_db)):
+def pagar_pedido(data: pago_datos,background_tasks: BackgroundTasks,  current_user: str = Depends(get_current_user),  db: Session = Depends(get_db)):
     id_usuario= current_user
-    service = Pago_Service(db)
+    service = Pago_Service(db, background_tasks)
     return service.registrar_pago(id_usuario,data.id_pedido, data.metodo_pago,data.id_mesa,data.referencia_pago)
 
 @pago_router.get("/total_pedido", summary="Obtener el total del pedido")

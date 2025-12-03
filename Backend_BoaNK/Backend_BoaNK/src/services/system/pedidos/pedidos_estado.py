@@ -739,6 +739,16 @@ class PedidoService_Gets:
                     import asyncio
                     asyncio.create_task(self._notificar_platillo_listo(resultado))
 
+            if estado == 'servido':
+                if self.background_tasks:
+                    self.background_tasks.add_task(
+                        self._notificar_platillo_servido,
+                        resultado
+                    )
+                else:
+                    import asyncio
+                    asyncio.create_task(self._notificar_platillo_servido(resultado))
+
             return {
                 "message": f"Estado del platillo cambiado a {estado}",
                 "id_detalle": id_detalle,
@@ -775,6 +785,30 @@ class PedidoService_Gets:
 
         except Exception as e:
             print(f"❌ Error al enviar notificación WebSocket a meseros: {e}")
+
+    async def _notificar_platillo_servido(self, platillo_info):
+        """Notifica a los meseros que un platillo está listo"""
+        try:
+            mensaje = {
+                "tipo": "platillo_servido",
+                "id_detalle": platillo_info.id_detalle,
+                "id_pedido": platillo_info.id_pedido,
+                "nombre_platillo": platillo_info.Nombre_platillo,
+                "tipo_pedido": platillo_info.Tipo_pedido,
+                "id_mesa": platillo_info.id_mesa,
+                "nombre_mesa": platillo_info.Nombre_mesa,
+                "timestamp": datetime.now().isoformat()
+            }
+
+            # 🔥 Enviar notificación a TODOS los meseros conectados
+            await manager.broadcast_to_group(mensaje, "meseros")
+            await manager.broadcast_to_group(mensaje, "cocineros")
+
+            print(f"✅ Notificación enviada a meseros: Platillo {platillo_info.nombre_platillo} listo")
+
+        except Exception as e:
+            print(f"❌ Error al enviar notificación WebSocket a meseros: {e}")
+
 
     # 🔥 OPCIONAL: Método para notificar también a cocineros cuando se cancela
     async def _notificar_platillo_cancelado(self, id_pedido, tipo_pedido:str):
