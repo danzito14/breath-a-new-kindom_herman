@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
+
 # ✅ Cargar el archivo .env
 load_dotenv()
 
@@ -34,7 +35,9 @@ from src.routers.sys.pedidos.registrar_pedido_router import registar
 from src.routers.sys.websocket_router import websocket_router
 from src.utils.cp_router import utils
 from src.utils.utils_empleados import untils_empleados
+from src.services.system.reportes.mineria_datos import mineria
 
+from src.utils.recomendacion_router import router_recomendar
 
 
 app = FastAPI()
@@ -81,4 +84,5 @@ app.include_router(pago_router)
 app.include_router(websocket_router)
 app.include_router(repartidor_router)
 app.include_router(reportes)
-
+app.include_router(mineria)
+app.include_router(router_recomendar)
