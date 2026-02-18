@@ -53,7 +53,7 @@ async def get_data_for_mining(db: AsyncSession):
         ORDER BY p.Fecha DESC
     """)
 
-    # Ejecutar la query de forma asíncrona
+    # Ejecutar la query
     result =  db.execute(query, {"days": DIAS_ANALISIS})
 
     # mappings().all() es síncrono, no necesita await

@@ -194,7 +194,7 @@ class RegistrarPedido_Service:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=f"Error al registrar el pedido detalle: {e}")
 
-    # 🔥 MÉTODO PARA NOTIFICAR VÍA WEBSOCKET
+    # MÉTODO PARA NOTIFICAR VÍA WEBSOCKET
     async def _notificar_nuevo_pedido_async(self, id_pedido: str, datos_temporal, platillos_info: List[dict]):
         """Notifica a cocina sobre nuevos platillos pendientes"""
         try:
